@@ -1,0 +1,27 @@
+{
+  "name": "backbone.spice",
+  "version": "0.0.0",
+  "description": "Local caching for Backbone",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "author": "Christian Maher",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "exec-sync": "^0.1.6",
+    "gulp": "^3.8.7",
+    "gulp-mocha": "^1.0.0",
+    "mocha": "^1.21.4",
+    "node-localstorage": "^0.3.4",
+    "sinon": "^1.10.3",
+    "sinon-chai": "^2.5.0",
+    "when": "^3.4.4"
+  },
+  "dependencies": {
+    "backbone": "^1.1.2",
+    "jquery": "^2.1.1",
+    "underscore": "^1.7.0"
+  }
+}
