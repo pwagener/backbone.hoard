@@ -26,12 +26,16 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     return _.result(model, 'url');
   },
 
-  getCacheEvent: function (key) {
-    return 'cache:update:' + key;
+  getCacheSuccessEvent: function (key) {
+    return 'cache:success:' + key;
   },
 
-  invalidateCache: function (model, method) {
-    this.backend.removeItem(this.getCacheKey(model, method));
+  getCacheErrorEvent: function (key) {
+    return 'cache:error:' + key;
+  },
+
+  invalidateCache: function (key) {
+    this.backend.removeItem(key);
   },
 
   sync: function (method, model, options) {
@@ -54,18 +58,32 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
 
   onReadCacheMiss: function (key, model, options) {
     this.backend.setItem(key, JSON.stringify({ placeholder: true }));
-    options.success = this.getCachingWrappedSuccess(key, model, options);
-    return model.sync('read', model, options);
+    return this.cacheSuccess('read', model, options, key);
   },
 
   onReadCachePlaceholderHit: function (key, options) {
     var deferred = SpiceConfig.deferred();
-    this.once(this.getCacheEvent(key), function (response) {
+    var successEvent = this.getCacheSuccessEvent(key);
+    var errorEvent = this.getCacheErrorEvent(key);
+
+    var onSuccess = function (response) {
       if (options.success) {
         options.success(response);
       }
+      this.off(errorEvent, onError);
       SpiceConfig.resolveDeferred(deferred, response);
-    });
+    };
+
+    var onError = function (response) {
+      if (options.error) {
+        options.error(response);
+      }
+      this.off(successEvent, onSuccess);
+      SpiceConfig.resolveDeferred(deferred, response);
+    };
+
+    this.once(successEvent, onSuccess);
+    this.once(errorEvent, onError);
     return deferred.promise;
   },
 
@@ -81,7 +99,7 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     });
   },
 
-  getCachingWrappedSuccess: function (key, model, options) {
+  wrapSuccessWithCache: function (key, model, options) {
     var self = this;
     return _.wrap(options.success, function (onSuccess, response) {
       if (onSuccess) {
@@ -91,10 +109,21 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     });
   },
 
+  wrapErrorWithInvalidate: function (key, model, options) {
+    var self = this;
+    return _.wrap(options.error, function (onError, response) {
+      if (onError) {
+        onError(response);
+      }
+      self.invalidateCache(key);
+      self.trigger(self.getCacheErrorEvent(key));
+    });
+  },
+
   storeResponse: function (key, response) {
     var entry = { data: response };
     this.backend.setItem(key, JSON.stringify(entry));
-    this.trigger(this.getCacheEvent(key), response);
+    this.trigger(this.getCacheSuccessEvent(key), response);
   },
 
   onCreate: function (model, options) {
@@ -109,14 +138,16 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     return this.cacheSuccess('patch', model, options);
   },
 
-  cacheSuccess: function (method, model, options) {
-    var key = this.getCacheKey(model, method);
-    options.success = this.getCachingWrappedSuccess(key, model, options);
+  cacheSuccess: function (method, model, options, key) {
+    key = key || this.getCacheKey(model, method);
+    options.success = this.wrapSuccessWithCache(key, model, options);
+    options.error = this.wrapErrorWithInvalidate(key, model, options);
     return model.sync(method, model, options);
   },
 
   onDelete: function (model, options) {
-    this.invalidateCache(model, 'delete');
+    var key = this.getCacheKey(model, 'delete');
+    this.invalidateCache(key);
     return model.sync('delete', model, options);
   }
 });
