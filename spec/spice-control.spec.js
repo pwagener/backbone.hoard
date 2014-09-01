@@ -5,9 +5,17 @@ var Spice = require('./support/spice');
 var SpiceControl = require('./support/spice-control');
 
 describe("SpiceControl", function () {
+  var spec;
+
   beforeEach(function () {
+    spec = this;
+    this.spiceControl = new SpiceControl();
     this.modelUrl = 'theUrl';
     this.Model = Backbone.Model.extend({ url: this.modelUrl });
+    this.sinon.stub(this.localStorage, 'setItem');
+    this.serverResponse = { myResponse: true };
+    this.storedResponse = JSON.stringify({ data: this.serverResponse });
+    this.expectedEvent = 'cache:update:' + this.modelUrl;
   });
 
   describe("construction", function () {
@@ -38,7 +46,6 @@ describe("SpiceControl", function () {
   describe("generateKey", function () {
     beforeEach(function () {
       this.model = new this.Model();
-      this.spiceControl = new SpiceControl();
       this.key = this.spiceControl.generateKey(this.model);
     });
 
@@ -47,9 +54,25 @@ describe("SpiceControl", function () {
     });
   });
 
+  describe("storeResponse", function () {
+    beforeEach(function () {
+      this.sinon.spy(this.spiceControl, 'trigger');
+      this.spiceControl.storeResponse(this.modelUrl, this.serverResponse);
+    });
+
+    it("writes to the cache", function () {
+      expect(this.localStorage.setItem).to.have.been
+        .calledWith(this.modelUrl, this.storedResponse);
+    });
+
+    it("triggers a cache:update:[key] event with the response", function () {
+      expect(this.spiceControl.trigger).to.have.been
+        .calledWith(this.expectedEvent, this.serverResponse);
+    });
+  });
+
   describe("invalidate", function () {
     beforeEach(function () {
-      var spec = this;
       this.Model = Backbone.Model.extend({
         url: function () {
           return spec.modelUrl;
@@ -78,16 +101,13 @@ describe("SpiceControl", function () {
 
   describe("sync", function () {
     beforeEach(function () {
-      var spec = this;
+      spec = this;
       this.model = new this.Model();
-      this.serverResponse = { myResponse: true };
-      this.storedResponse = JSON.stringify({ data: this.serverResponse });
-      this.ajax = Spice.deferred();
 
+      this.ajax = Spice.deferred();
       this.syncResponse = this.ajax.promise.then(function () {
         spec.ajaxOptions.success(spec.serverResponse);
       });
-
       this.sinon.stub(Backbone, 'ajax', function (options) {
         spec.ajaxOptions = options;
         return spec.syncResponse;
@@ -95,15 +115,44 @@ describe("SpiceControl", function () {
 
       this.success = this.sinon.stub();
       this.options = { success: this.success };
-      this.expectedEvent = 'cache:update:' + this.modelUrl;
       this.placeholder = JSON.stringify({ placeholder: true });
-      this.spiceControl = new SpiceControl({ store: this.model });
-      this.sinon.spy(this.spiceControl, 'onRead');
-      this.sinon.spy(this.spiceControl, 'trigger');
+      this.sinon.spy(this.spiceControl, 'storeResponse');
       this.sinon.spy(this.model, 'sync');
     });
 
-    describe("method: read", function () {
+    describe("with method create", function () {
+      beforeEach(function () {
+        this.sinon.spy(this.spiceControl, 'onCreate');
+        this.sinon.stub(this.localStorage, 'getItem').returns(this.storedResponse);
+        this.syncReturn = this.spiceControl.sync('create', this.model, this.options);
+      });
+
+      it("calls onCreate with the model and the options", function () {
+        expect(this.spiceControl.onCreate).to.have.been.calledOnce
+          .and.calledWith(this.model, this.options);
+      });
+
+      it("calls the underlying model's sync with the same arguments", function () {
+        expect(this.model.sync).to.have.been.calledOnce
+          .and.calledWith('create', this.model, this.options);
+      });
+
+      it("writes to the cache when the response returns", function (done) {
+        this.ajax.resolve();
+        this.syncReturn.then(function () {
+          expect(spec.spiceControl.storeResponse).to.have.been.calledOnce
+            .and.calledWith(spec.modelUrl, spec.serverResponse);
+          done();
+        });
+      });
+    });
+
+    describe("with method read", function () {
+      beforeEach(function () {
+        spec = this;
+        this.sinon.spy(this.spiceControl, 'onRead');
+      });
+
       it("calls onRead with the model and the options", function () {
         this.spiceControl.sync('read', this.model, this.options);
         expect(this.spiceControl.onRead).to.have.been.calledOnce
@@ -120,7 +169,6 @@ describe("SpiceControl", function () {
       describe("on a cache miss", function () {
         beforeEach(function () {
           this.sinon.stub(this.localStorage, 'getItem').returns(null);
-          this.sinon.stub(this.localStorage, 'setItem');
           this.syncReturn = this.spiceControl.sync('read', this.model, this.options);
         });
 
@@ -135,10 +183,7 @@ describe("SpiceControl", function () {
         });
 
         describe("when the sync resolves", function () {
-          var spec;
-
           beforeEach(function () {
-            spec = this;
             this.ajax.resolve();
           });
 
@@ -150,18 +195,11 @@ describe("SpiceControl", function () {
             });
           });
 
-          it("writes to the cache", function (done) {
-            this.syncResponse.then(function () {
-              expect(spec.localStorage.setItem).to.have.been
-                .calledWith(spec.modelUrl, spec.storedResponse);
-              done();
-            });
-          });
-
-          it("triggers a cache:update:[key] event with the response", function (done) {
-            this.syncResponse.then(function () {
-              expect(spec.spiceControl.trigger).to.have.been
-                .calledWith(spec.expectedEvent, spec.serverResponse);
+          it("writes to the cache when the response returns", function (done) {
+            this.ajax.resolve();
+            this.syncReturn.then(function () {
+              expect(spec.spiceControl.storeResponse).to.have.been.calledOnce
+                .and.calledWith(spec.modelUrl, spec.serverResponse);
               done();
             });
           });
@@ -177,7 +215,6 @@ describe("SpiceControl", function () {
           });
 
           it("calls the provided success function with the response", function (done) {
-            var spec = this;
             this.cacheHitRead.then(function () {
               expect(spec.success).to.have.been.calledOnce
                 .and.calledWith(spec.serverResponse);
@@ -198,7 +235,6 @@ describe("SpiceControl", function () {
           });
 
           it("calls the success method when the promise resolves", function (done) {
-            var spec = this;
             this.spiceControl.trigger(this.expectedEvent, this.serverResponse);
             this.cacheHitRead.then(function () {
               expect(spec.success).to.have.been.calledOnce

@@ -39,7 +39,9 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
   },
 
   onCreate: function (model, options) {
-    //store response
+    var key = this.generateKey(model, 'create');
+    options.success = this.getCachingSuccess(key, model, options);
+    return model.sync('create', model, options);
   },
 
   onRead: function (model, options) {
@@ -57,7 +59,7 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
 
   onReadCacheMiss: function (key, model, options) {
     this.backend.setItem(key, JSON.stringify({ placeholder: true }));
-    options.success = this.getCacheMissOnSuccess(key, model, options);
+    options.success = this.getCachingSuccess(key, model, options);
     return model.sync('read', model, options);
   },
 
@@ -84,7 +86,7 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     });
   },
 
-  getCacheMissOnSuccess: function (key, model, options) {
+  getCachingSuccess: function (key, model, options) {
     var self = this;
     return _.wrap(options.success, function (onSuccess, response) {
       if (onSuccess) {
