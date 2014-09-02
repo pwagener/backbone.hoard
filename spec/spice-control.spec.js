@@ -145,15 +145,6 @@ describe("SpiceControl", function () {
           done();
         });
       });
-
-      it("invalidates the cache on an error", function (done) {
-        this.ajax.reject();
-        this.syncReturn.then(function () {
-          expect(spec.spiceControl.invalidateCache).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl);
-          done();
-        });
-      });
     });
 
     describe("with method update", function () {
@@ -181,15 +172,6 @@ describe("SpiceControl", function () {
           done();
         });
       });
-
-      it("invalidates the cache on an error", function (done) {
-        this.ajax.reject();
-        this.syncReturn.then(function () {
-          expect(spec.spiceControl.invalidateCache).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl);
-          done();
-        });
-      });
     });
 
     describe("with method patch", function () {
@@ -214,15 +196,6 @@ describe("SpiceControl", function () {
         this.syncReturn.then(function () {
           expect(spec.spiceControl.storeResponse).to.have.been.calledOnce
             .and.calledWith(spec.modelUrl, spec.serverResponse);
-          done();
-        });
-      });
-
-      it("invalidates the cache on an error", function (done) {
-        this.ajax.reject();
-        this.syncReturn.then(function () {
-          expect(spec.spiceControl.invalidateCache).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl);
           done();
         });
       });

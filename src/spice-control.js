@@ -58,7 +58,9 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
 
   onReadCacheMiss: function (key, model, options) {
     this.backend.setItem(key, JSON.stringify({ placeholder: true }));
-    return this.cacheSuccess('read', model, options, key);
+    options.error = this.wrapErrorWithInvalidate(key, model, options);
+    options.success = this.wrapSuccessWithCache(key, model, options);
+    return model.sync('read', model, options);
   },
 
   onReadCachePlaceholderHit: function (key, options) {
@@ -138,10 +140,9 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
     return this.cacheSuccess('patch', model, options);
   },
 
-  cacheSuccess: function (method, model, options, key) {
-    key = key || this.getCacheKey(model, method);
+  cacheSuccess: function (method, model, options) {
+    var key = this.getCacheKey(model, method);
     options.success = this.wrapSuccessWithCache(key, model, options);
-    options.error = this.wrapErrorWithInvalidate(key, model, options);
     return model.sync(method, model, options);
   },
 
