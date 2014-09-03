@@ -3,7 +3,7 @@
 var chai = require('chai');
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
-var Spice = require('./support/spice');
+var Spice = require('./support/backbone.hoard');
 
 global.expect = chai.expect;
 chai.use(sinonChai);

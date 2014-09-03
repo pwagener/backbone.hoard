@@ -1,5 +1,5 @@
 {
-  "name": "backbone.spice",
+  "name": "backbone.hoard",
   "version": "0.0.0",
   "description": "Local caching for Backbone",
   "main": "gulpfile.js",

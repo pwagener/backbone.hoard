@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
-var SpiceControl = require('src/spice-control');
+var CacheControl = require('src/cache-control');
 
 module.exports = {
   resolveDeferred: function (deferred, value) {
@@ -24,7 +24,7 @@ module.exports = {
         "() -> { promise: A+ thenable } must be provided");
     }
 
-    this.SpiceControl = SpiceControl.initialize(this);
+    this.CacheControl = CacheControl.initialize(this);
     return this;
   }
 };

@@ -6,7 +6,7 @@ var SpiceConfig;
 
 var mergeOptions = ['backend'];
 
-var SpiceControl = function (options) {
+var CacheControl = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions));
   this.initialize.apply(this, arguments);
 };
@@ -19,7 +19,7 @@ var methodHandlers = {
   'read': 'onRead'
 };
 
-_.extend(SpiceControl.prototype, Backbone.Events, {
+_.extend(CacheControl.prototype, Backbone.Events, {
   initialize: function () {},
 
   getCacheKey: function (model, method) {
@@ -153,12 +153,12 @@ _.extend(SpiceControl.prototype, Backbone.Events, {
   }
 });
 
-SpiceControl.extend = Backbone.Model.extend;
+CacheControl.extend = Backbone.Model.extend;
 
 module.exports = {
   initialize: function (config) {
     SpiceConfig = config;
-    SpiceControl.prototype.backend = SpiceConfig.backend;
-    return SpiceControl;
+    CacheControl.prototype.backend = SpiceConfig.backend;
+    return CacheControl;
   }
 };
