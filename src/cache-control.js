@@ -45,14 +45,29 @@ _.extend(CacheControl.prototype, Backbone.Events, {
 
   onRead: function (model, options) {
     var key = this.getCacheKey(model, 'read');
-    var item = JSON.parse(this.backend.getItem(key));
+    var cachedItem = JSON.parse(this.backend.getItem(key));
+    var guardedItem = this.enforceCacheLifetime(key, cachedItem);
 
-    if (item === null) {
+    if (guardedItem === null) {
       return this.onReadCacheMiss(key, model, options);
-    } else if (item.placeholder) {
+    } else if (guardedItem.placeholder) {
       return this.onReadCachePlaceholderHit(key, options);
     } else {
-      return this.onReadCacheHit(item, options);
+      return this.onReadCacheHit(guardedItem, options);
+    }
+  },
+
+  enforceCacheLifetime: function (key, cacheItem) {
+    if (cacheItem == null) {
+      return null;
+    }
+
+    var meta = cacheItem.meta || {};
+    if (meta.expires != null && meta.expires < Date.now()) {
+      this.invalidateCache(key);
+      return null;
+    } else {
+      return cacheItem;
     }
   },
 

@@ -282,50 +282,73 @@ describe("CacheControl", function () {
             });
           });
         });
+      });
 
-        describe("on a cache hit", function () {
-          describe("when the cache contains data", function () {
-            beforeEach(function () {
-              this.localStorage.getItem.withArgs(this.modelUrl)
-                .returns(this.storedResponse);
-              this.cacheHitRead = this.cacheControl.sync('read', this.model, this.options);
+      describe("cache expiration", function () {
+        beforeEach(function () {
+          this.storedResponse = JSON.stringify({
+            meta: { expires: Date.now() - 10000 },
+            data: {}
+          });
+          this.sinon.stub(this.localStorage, 'getItem').withArgs(this.modelUrl)
+            .returns(this.storedResponse);
+          this.sinon.stub(this.localStorage, 'removeItem');
+          this.cacheExpire = this.cacheControl.sync('read', this.model, this.options);
+        });
+
+        it("evicts the cache item", function () {
+          expect(this.localStorage.removeItem).to.have.been.calledOnce
+            .and.calledWith(this.modelUrl);
+        });
+
+        it("returns the result of the underlying model's read", function () {
+          this.modelSync = this.model.sync('read', this.model, this.options);
+          expect(this.cacheExpire).to.eql(this.modelSync);
+        });
+      });
+
+      describe("on a cache hit", function () {
+        describe("when the cache contains data", function () {
+          beforeEach(function () {
+            this.sinon.stub(this.localStorage, 'getItem').withArgs(this.modelUrl)
+              .returns(this.storedResponse);
+            this.cacheHitRead = this.cacheControl.sync('read', this.model, this.options);
+          });
+
+          it("calls the provided success function with the response", function (done) {
+            this.cacheHitRead.then(function () {
+              expect(spec.success).to.have.been.calledOnce
+                .and.calledWith(spec.serverResponse);
+              done();
             });
+          });
+        });
 
-            it("calls the provided success function with the response", function (done) {
-              this.cacheHitRead.then(function () {
-                expect(spec.success).to.have.been.calledOnce
-                  .and.calledWith(spec.serverResponse);
-                done();
-              });
+        describe("when the cache contains a placeholder", function () {
+          beforeEach(function () {
+            this.sinon.stub(this.localStorage, 'getItem').withArgs(this.modelUrl)
+              .returns(this.placeholder);
+            this.cacheHitRead = this.cacheControl.sync('read', this.model, this.options);
+          });
+
+          it("does not call the provided success method", function () {
+            expect(this.success).not.to.have.been.called;
+          });
+
+          it("calls the success method when the promise resolves", function (done) {
+            this.cacheControl.trigger(this.expectedEvent, this.serverResponse);
+            this.cacheHitRead.then(function () {
+              expect(spec.success).to.have.been.calledOnce
+                .and.calledWith(spec.serverResponse);
+              done();
             });
           });
 
-          describe("when the cache contains a placeholder", function () {
-            beforeEach(function () {
-              this.localStorage.getItem.withArgs(this.modelUrl)
-                .returns(this.placeholder);
-              this.cacheHitRead = this.cacheControl.sync('read', this.model, this.options);
-            });
-
-            it("does not call the provided success method", function () {
-              expect(this.success).not.to.have.been.called;
-            });
-
-            it("calls the success method when the promise resolves", function (done) {
-              this.cacheControl.trigger(this.expectedEvent, this.serverResponse);
-              this.cacheHitRead.then(function () {
-                expect(spec.success).to.have.been.calledOnce
-                  .and.calledWith(spec.serverResponse);
-                done();
-              });
-            });
-
-            it("calls the error method when the promise rejects", function (done) {
-              this.cacheControl.trigger(this.expectedErrorEvent);
-              this.cacheHitRead.then(function () {
-                expect(spec.error).to.have.been.calledOnce;
-                done();
-              });
+          it("calls the error method when the promise rejects", function (done) {
+            this.cacheControl.trigger(this.expectedErrorEvent);
+            this.cacheHitRead.then(function () {
+              expect(spec.error).to.have.been.calledOnce;
+              done();
             });
           });
         });
