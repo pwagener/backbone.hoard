@@ -2,7 +2,7 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var SpiceConfig;
+var HoardConfig;
 
 var mergeOptions = ['backend'];
 
@@ -64,7 +64,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   },
 
   onReadCachePlaceholderHit: function (key, options) {
-    var deferred = SpiceConfig.deferred();
+    var deferred = HoardConfig.deferred();
     var successEvent = this.getCacheSuccessEvent(key);
     var errorEvent = this.getCacheErrorEvent(key);
 
@@ -73,7 +73,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
         options.success(response);
       }
       this.off(errorEvent, onError);
-      SpiceConfig.resolveDeferred(deferred, response);
+      HoardConfig.resolveDeferred(deferred, response);
     };
 
     var onError = function (response) {
@@ -81,7 +81,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
         options.error(response);
       }
       this.off(successEvent, onSuccess);
-      SpiceConfig.resolveDeferred(deferred, response);
+      HoardConfig.resolveDeferred(deferred, response);
     };
 
     this.once(successEvent, onSuccess);
@@ -90,8 +90,8 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   },
 
   onReadCacheHit: function (item, options) {
-    var deferred = SpiceConfig.deferred();
-    SpiceConfig.resolveDeferred(deferred, item);
+    var deferred = HoardConfig.deferred();
+    HoardConfig.resolveDeferred(deferred, item);
     return deferred.promise.then(function (item) {
       var itemData = item.data;
       if (options.success) {
@@ -157,8 +157,8 @@ CacheControl.extend = Backbone.Model.extend;
 
 module.exports = {
   initialize: function (config) {
-    SpiceConfig = config;
-    CacheControl.prototype.backend = SpiceConfig.backend;
+    HoardConfig = config;
+    CacheControl.prototype.backend = HoardConfig.backend;
     return CacheControl;
   }
 };
