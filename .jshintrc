@@ -20,6 +20,8 @@
   "undef": true,
   "bitwise": true,
   "browser": true,
+  "expr": true,
+  "eqnull": true,
   "maxcomplexity": 6,
   "maxlen": 100
 }

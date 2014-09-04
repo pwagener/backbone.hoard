@@ -4,7 +4,7 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var HoardConfig;
 
-var mergeOptions = ['backend'];
+var mergeOptions = ['backend', 'expires', 'timeToLive'];
 
 var CacheControl = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions));
@@ -122,7 +122,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
       if (onSuccess) {
         onSuccess(response);
       }
-      self.storeResponse(key, response);
+      self.storeResponse(key, response, options);
     });
   },
 
@@ -137,10 +137,26 @@ _.extend(CacheControl.prototype, Backbone.Events, {
     });
   },
 
-  storeResponse: function (key, response) {
-    var entry = { data: response };
+  storeResponse: function (key, response, options) {
+    var meta = this.getMetadata(key, response, options);
+    var entry = { data: response, meta: meta };
     this.backend.setItem(key, JSON.stringify(entry));
     this.trigger(this.getCacheSuccessEvent(key), response);
+  },
+
+  getMetadata: function (key, response, options) {
+    options = options || {};
+    var meta = {};
+    var expires = options.expires || this.expires;
+    var ttl = options.timeToLive || this.timeToLive;
+    if (ttl != null && expires == null) {
+      expires = Date.now() + ttl;
+    }
+    if (expires != null) {
+      meta.expires = expires;
+    }
+
+    return meta;
   },
 
   onCreate: function (model, options) {
