@@ -44,7 +44,7 @@ describe("Hoard.Control", function () {
     });
   });
 
-  describe("getCacheKey", function () {
+  xdescribe("getCacheKey", function () {
     beforeEach(function () {
       this.model = new this.Model();
       this.key = this.cacheControl.getCacheKey(this.model);
@@ -93,7 +93,7 @@ describe("Hoard.Control", function () {
     });
   });
 
-  describe("getMetadata", function () {
+  xdescribe("getMetadata", function () {
     describe("cache expiration", function () {
       beforeEach(function () {
         this.clock = this.sinon.useFakeTimers(5);
@@ -157,8 +157,8 @@ describe("Hoard.Control", function () {
       };
       this.placeholder = JSON.stringify({ placeholder: true });
       this.sinon.spy(this.cacheControl, 'storeResponse');
-      this.cacheStore = this.cacheControl.cacheStore;
-      this.sinon.spy(this.cacheStore, 'invalidate');
+      this.store = this.cacheControl.store;
+      this.sinon.spy(this.store, 'invalidate');
       this.sinon.spy(this.model, 'sync');
     });
 
@@ -259,7 +259,7 @@ describe("Hoard.Control", function () {
         this.sinon.stub(this.localStorage, 'getItem').returns(null);
         this.cacheControl.sync('read', this.model, this.options);
         expect(this.localStorage.getItem).to.have.been.calledOnce
-          .and.calledWith(this.cacheControl.getCacheKey(this.model, 'read'));
+          .and.calledWith(this.modelUrl);
       });
 
       describe("on a cache miss", function () {
@@ -318,7 +318,7 @@ describe("Hoard.Control", function () {
 
           it("invalidates the cache", function (done) {
             this.syncReturn.then(function () {
-              expect(spec.cacheStore.invalidate).to.have.been.calledOnce
+              expect(spec.store.invalidate).to.have.been.calledOnce
                 .and.calledWith(spec.modelUrl);
               done();
             });
@@ -409,7 +409,7 @@ describe("Hoard.Control", function () {
       });
 
       it("invalidates the cache", function () {
-        expect(this.cacheStore.invalidate).to.have.been.calledOnce
+        expect(this.store.invalidate).to.have.been.calledOnce
           .and.calledWith(this.modelUrl);
       });
 

@@ -4,13 +4,16 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var Hoard;
 
-var mergeOptions = ['storeClass', 'expires', 'timeToLive'];
+var mergeOptions = ['storeClass', 'policyClass'];
 
 var Control = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions), {
-    storeClass: Hoard.Store
+    storeClass: Hoard.Store,
+    policyClass: Hoard.Policy
   });
-  this.cacheStore = new this.storeClass(options);
+  this.store = new this.storeClass(options);
+  var optionsWithStore = _.extend({}, options, { store: this.store });
+  this.policy = new this.policyClass(optionsWithStore);
   this.initialize.apply(this, arguments);
 };
 
@@ -24,10 +27,6 @@ var methodHandlers = {
 
 _.extend(Control.prototype, Backbone.Events, {
   initialize: function () {},
-
-  getCacheKey: function (model, method) {
-    return _.result(model, 'url');
-  },
 
   getCacheSuccessEvent: function (key) {
     return 'cache:success:' + key;
@@ -43,9 +42,9 @@ _.extend(Control.prototype, Backbone.Events, {
   },
 
   onRead: function (model, options) {
-    var key = this.getCacheKey(model, 'read');
-    var cachedItem = this.cacheStore.get(key);
-    var guardedItem = this.enforceCacheLifetime(key, cachedItem);
+    var key = this.policy.getKey(model, 'read');
+    var cachedItem = this.store.get(key);
+    var guardedItem = this.policy.enforceCacheLifetime(key, cachedItem);
 
     if (guardedItem === null) {
       return this.onReadCacheMiss(key, model, options);
@@ -56,22 +55,8 @@ _.extend(Control.prototype, Backbone.Events, {
     }
   },
 
-  enforceCacheLifetime: function (key, cacheItem) {
-    if (cacheItem == null) {
-      return null;
-    }
-
-    var meta = cacheItem.meta || {};
-    if (meta.expires != null && meta.expires < Date.now()) {
-      this.cacheStore.invalidate(key);
-      return null;
-    } else {
-      return cacheItem;
-    }
-  },
-
   onReadCacheMiss: function (key, model, options) {
-    this.cacheStore.set(key, { placeholder: true });
+    this.store.set(key, { placeholder: true });
     options.error = this.wrapErrorWithInvalidate(key, model, options);
     options.success = this.wrapSuccessWithCache(key, model, options);
     return model.sync('read', model, options);
@@ -131,31 +116,16 @@ _.extend(Control.prototype, Backbone.Events, {
       if (onError) {
         onError(response);
       }
-      self.cacheStore.invalidate(key);
+      self.store.invalidate(key);
       self.trigger(self.getCacheErrorEvent(key));
     });
   },
 
   storeResponse: function (key, response, options) {
-    var meta = this.getMetadata(key, response, options);
+    var meta = this.policy.getMetadata(key, response, options);
     var entry = { data: response, meta: meta };
-    this.cacheStore.set(key, entry);
+    this.store.set(key, entry);
     this.trigger(this.getCacheSuccessEvent(key), response);
-  },
-
-  getMetadata: function (key, response, options) {
-    options = options || {};
-    var meta = {};
-    var expires = options.expires || this.expires;
-    var ttl = options.timeToLive || this.timeToLive;
-    if (ttl != null && expires == null) {
-      expires = Date.now() + ttl;
-    }
-    if (expires != null) {
-      meta.expires = expires;
-    }
-
-    return meta;
   },
 
   onCreate: function (model, options) {
@@ -171,14 +141,14 @@ _.extend(Control.prototype, Backbone.Events, {
   },
 
   cacheSuccess: function (method, model, options) {
-    var key = this.getCacheKey(model, method);
+    var key = this.policy.getKey(model, method);
     options.success = this.wrapSuccessWithCache(key, model, options);
     return model.sync(method, model, options);
   },
 
   onDelete: function (model, options) {
-    var key = this.getCacheKey(model, 'delete');
-    this.cacheStore.invalidate(key);
+    var key = this.policy.getKey(model, 'delete');
+    this.store.invalidate(key);
     return model.sync('delete', model, options);
   }
 });
