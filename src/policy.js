@@ -2,7 +2,7 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var Hoard;
+var Hoard = require('src/backbone.hoard');
 
 var mergeOptions = ['expires', 'timeToLive'];
 
@@ -49,9 +49,4 @@ _.extend(Policy.prototype, Backbone.Events, {
 
 Policy.extend = Backbone.Model.extend;
 
-module.exports = {
-  initialize: function (options) {
-    Hoard = options;
-    return Policy;
-  }
-};
+module.exports = Policy;

@@ -2,18 +2,18 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var Hoard;
+var Hoard = require('src/backbone.hoard');
 
 var mergeOptions = ['backend'];
 
-var CacheStore = function (options) {
+var Store = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions), {
     backend: Hoard.backend
   });
   this.initialize.apply(this, arguments);
 };
 
-_.extend(CacheStore.prototype, Backbone.Events, {
+_.extend(Store.prototype, Backbone.Events, {
   initialize: function () {},
 
   set: function (key, value, options) {
@@ -34,9 +34,4 @@ _.extend(CacheStore.prototype, Backbone.Events, {
 
 Store.extend = Backbone.Model.extend;
 
-module.exports = {
-  initialize: function (options) {
-    Hoard = options;
-    return CacheStore;
-  }
-};
+module.exports = Store;

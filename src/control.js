@@ -2,14 +2,16 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var Hoard;
+var Hoard = require('src/backbone.hoard');
+var Store = require('src/store');
+var Policy = require('src/policy');
 
 var mergeOptions = ['storeClass', 'policyClass'];
 
 var Control = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions), {
-    storeClass: Hoard.Store,
-    policyClass: Hoard.Policy
+    storeClass: Store,
+    policyClass: Policy
   });
   this.store = new this.storeClass(options);
   this.policy = new this.policyClass(options);
@@ -156,9 +158,4 @@ _.extend(Control.prototype, Backbone.Events, {
 
 Control.extend = Backbone.Model.extend;
 
-module.exports = {
-  initialize: function (config) {
-    Hoard = config;
-    return Control;
-  }
-};
+module.exports = Control;

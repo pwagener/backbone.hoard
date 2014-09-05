@@ -2,7 +2,7 @@
 
 var Backbone = require('backbone');
 var Hoard = require('./support/backbone.hoard');
-var Control = Hoard.Control;
+var Control = require('src/control');
 
 describe("Hoard.Control", function () {
   var spec;
