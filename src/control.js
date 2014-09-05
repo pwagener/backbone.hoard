@@ -2,15 +2,15 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var HoardConfig;
+var Hoard;
 
-var mergeOptions = ['cacheStoreClass', 'expires', 'timeToLive'];
+var mergeOptions = ['storeClass', 'expires', 'timeToLive'];
 
-var CacheControl = function (options) {
+var Control = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions), {
-    cacheStoreClass: HoardConfig.CacheStore
+    storeClass: Hoard.Store
   });
-  this.cacheStore = new this.cacheStoreClass(options);
+  this.cacheStore = new this.storeClass(options);
   this.initialize.apply(this, arguments);
 };
 
@@ -22,7 +22,7 @@ var methodHandlers = {
   'read': 'onRead'
 };
 
-_.extend(CacheControl.prototype, Backbone.Events, {
+_.extend(Control.prototype, Backbone.Events, {
   initialize: function () {},
 
   getCacheKey: function (model, method) {
@@ -78,7 +78,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   },
 
   onReadCachePlaceholderHit: function (key, options) {
-    var deferred = HoardConfig.deferred();
+    var deferred = Hoard.deferred();
     var successEvent = this.getCacheSuccessEvent(key);
     var errorEvent = this.getCacheErrorEvent(key);
 
@@ -87,7 +87,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
         options.success(response);
       }
       this.off(errorEvent, onError);
-      HoardConfig.resolveDeferred(deferred, response);
+      Hoard.resolveDeferred(deferred, response);
     };
 
     var onError = function (response) {
@@ -95,7 +95,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
         options.error(response);
       }
       this.off(successEvent, onSuccess);
-      HoardConfig.resolveDeferred(deferred, response);
+      Hoard.resolveDeferred(deferred, response);
     };
 
     this.once(successEvent, onSuccess);
@@ -104,8 +104,8 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   },
 
   onReadCacheHit: function (item, options) {
-    var deferred = HoardConfig.deferred();
-    HoardConfig.resolveDeferred(deferred, item);
+    var deferred = Hoard.deferred();
+    Hoard.resolveDeferred(deferred, item);
     return deferred.promise.then(function (item) {
       var itemData = item.data;
       if (options.success) {
@@ -183,11 +183,11 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   }
 });
 
-CacheControl.extend = Backbone.Model.extend;
+Control.extend = Backbone.Model.extend;
 
 module.exports = {
   initialize: function (config) {
-    HoardConfig = config;
-    return CacheControl;
+    Hoard = config;
+    return Control;
   }
 };

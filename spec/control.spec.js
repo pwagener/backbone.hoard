@@ -2,14 +2,14 @@
 
 var Backbone = require('backbone');
 var Hoard = require('./support/backbone.hoard');
-var CacheControl = require('./support/cache-control');
+var Control = Hoard.Control;
 
-describe("CacheControl", function () {
+describe("Hoard.Control", function () {
   var spec;
 
   beforeEach(function () {
     spec = this;
-    this.cacheControl = new CacheControl();
+    this.cacheControl = new Control();
     this.modelUrl = 'theUrl';
     this.Model = Backbone.Model.extend({ url: this.modelUrl });
     this.sinon.stub(this.localStorage, 'setItem');
@@ -25,12 +25,12 @@ describe("CacheControl", function () {
       this.options = {
         backend: this.backend
       };
-      this.initializeSpy = this.sinon.spy(CacheControl.prototype, 'initialize');
-      this.cacheControl = new CacheControl(this.options);
+      this.initializeSpy = this.sinon.spy(Control.prototype, 'initialize');
+      this.cacheControl = new Control(this.options);
     });
 
     it("should create a CacheControl", function () {
-      expect(this.cacheControl).to.be.instanceOf(CacheControl);
+      expect(this.cacheControl).to.be.instanceOf(Control);
     });
 
     xit("should assign the provided backend", function () {
@@ -81,7 +81,7 @@ describe("CacheControl", function () {
       });
       this.model = new this.Model();
 
-      this.cacheControl = new CacheControl();
+      this.cacheControl = new Control();
       this.sinon.stub(this.localStorage, 'removeItem');
 
       this.cacheControl.invalidateCache(this.cacheControl.getCacheKey(this.model));
@@ -104,30 +104,30 @@ describe("CacheControl", function () {
       });
 
       it("sets expiration based on the expires property", function () {
-        var cacheControl = new CacheControl({ expires: 1234 });
+        var cacheControl = new Control({ expires: 1234 });
         expect(cacheControl.getMetadata()).to.eql({ expires: 1234 });
       });
 
       it("overrides the expires property with the options", function () {
-        var cacheControl = new CacheControl({ expires: 1234 });
+        var cacheControl = new Control({ expires: 1234 });
         var meta = cacheControl.getMetadata('key', 'response', { expires: 1 });
         expect(meta).to.eql({ expires: 1 });
       });
 
       it("uses the timeToLive property to calculate expires", function () {
-        var cacheControl = new CacheControl({ timeToLive: 10 });
+        var cacheControl = new Control({ timeToLive: 10 });
         var meta = cacheControl.getMetadata();
         expect(meta).to.eql({ expires: 15 });
       });
 
       it("overrides the expires property with the options", function () {
-        var cacheControl = new CacheControl({ timeToLive: 10 });
+        var cacheControl = new Control({ timeToLive: 10 });
         var meta = cacheControl.getMetadata('key', 'response', { timeToLive: 5});
         expect(meta).to.eql({ expires: 10 });
       });
 
       it("prefers expires to timeToLive", function () {
-        var cacheControl = new CacheControl({ expires: 100, timeToLive: 10 });
+        var cacheControl = new Control({ expires: 100, timeToLive: 10 });
         var meta = cacheControl.getMetadata();
         expect(meta).to.eql({ expires: 100 });
       });
