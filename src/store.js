@@ -17,7 +17,9 @@ _.extend(CacheStore.prototype, Backbone.Events, {
   initialize: function () {},
 
   set: function (key, value, options) {
-    this.backend.setItem(key, JSON.stringify(value));
+    var valueToStore = JSON.stringify(value)
+    this.backend.setItem(key, valueToStore);
+    return valueToStore;
   },
 
   get: function (key, options) {
@@ -26,8 +28,11 @@ _.extend(CacheStore.prototype, Backbone.Events, {
 
   invalidate: function (key) {
     this.backend.removeItem(key);
+    return null;
   }
 });
+
+Store.extend = Backbone.Model.extend;
 
 module.exports = {
   initialize: function (options) {

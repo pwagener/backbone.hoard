@@ -4,7 +4,7 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var Hoard;
 
-var mergeOptions = ['store', 'expires', 'timeToLive'];
+var mergeOptions = ['expires', 'timeToLive'];
 
 var Policy = function (options) {
   _.extend(this, _.pick(options, mergeOptions));
@@ -33,20 +33,21 @@ _.extend(Policy.prototype, Backbone.Events, {
     return meta;
   },
 
-  enforceCacheLifetime: function (key, cacheItem) {
+  shouldEvictItem: function (cacheItem) {
     if (cacheItem == null) {
-      return null;
+      return false;
     }
 
     var meta = cacheItem.meta || {};
     if (meta.expires != null && meta.expires < Date.now()) {
-      this.store.invalidate(key);
-      return null;
+      return true;
     } else {
-      return cacheItem;
+      return false;
     }
   }
 });
+
+Policy.extend = Backbone.Model.extend;
 
 module.exports = {
   initialize: function (options) {

@@ -12,8 +12,7 @@ var Control = function (options) {
     policyClass: Hoard.Policy
   });
   this.store = new this.storeClass(options);
-  var optionsWithStore = _.extend({}, options, { store: this.store });
-  this.policy = new this.policyClass(optionsWithStore);
+  this.policy = new this.policyClass(options);
   this.initialize.apply(this, arguments);
 };
 
@@ -44,14 +43,16 @@ _.extend(Control.prototype, Backbone.Events, {
   onRead: function (model, options) {
     var key = this.policy.getKey(model, 'read');
     var cachedItem = this.store.get(key);
-    var guardedItem = this.policy.enforceCacheLifetime(key, cachedItem);
+    if (this.policy.shouldEvictItem(cachedItem)) {
+      cachedItem = this.store.invalidate(key);
+    }
 
-    if (guardedItem === null) {
+    if (cachedItem === null) {
       return this.onReadCacheMiss(key, model, options);
-    } else if (guardedItem.placeholder) {
+    } else if (cachedItem.placeholder) {
       return this.onReadCachePlaceholderHit(key, options);
     } else {
-      return this.onReadCacheHit(guardedItem, options);
+      return this.onReadCacheHit(cachedItem, options);
     }
   },
 
