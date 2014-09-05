@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
+var CacheStore = require('src/cache-store');
 var CacheControl = require('src/cache-control');
 
 module.exports = {
@@ -24,6 +25,7 @@ module.exports = {
         "() -> { promise: A+ thenable } must be provided");
     }
 
+    this.CacheStore = CacheStore.initialize(this);
     this.CacheControl = CacheControl.initialize(this);
     return this;
   }

@@ -4,10 +4,13 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var HoardConfig;
 
-var mergeOptions = ['backend', 'expires', 'timeToLive'];
+var mergeOptions = ['cacheStoreClass', 'expires', 'timeToLive'];
 
 var CacheControl = function (options) {
-  _.extend(this, _.pick(options || {}, mergeOptions));
+  _.extend(this, _.pick(options || {}, mergeOptions), {
+    cacheStoreClass: HoardConfig.CacheStore
+  });
+  this.cacheStore = new this.cacheStoreClass(options);
   this.initialize.apply(this, arguments);
 };
 
@@ -34,10 +37,6 @@ _.extend(CacheControl.prototype, Backbone.Events, {
     return 'cache:error:' + key;
   },
 
-  invalidateCache: function (key) {
-    this.backend.removeItem(key);
-  },
-
   sync: function (method, model, options) {
     var handlerName = methodHandlers[method];
     return this[handlerName](model, options);
@@ -45,7 +44,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
 
   onRead: function (model, options) {
     var key = this.getCacheKey(model, 'read');
-    var cachedItem = JSON.parse(this.backend.getItem(key));
+    var cachedItem = this.cacheStore.get(key);
     var guardedItem = this.enforceCacheLifetime(key, cachedItem);
 
     if (guardedItem === null) {
@@ -64,7 +63,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
 
     var meta = cacheItem.meta || {};
     if (meta.expires != null && meta.expires < Date.now()) {
-      this.invalidateCache(key);
+      this.cacheStore.invalidate(key);
       return null;
     } else {
       return cacheItem;
@@ -72,7 +71,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   },
 
   onReadCacheMiss: function (key, model, options) {
-    this.backend.setItem(key, JSON.stringify({ placeholder: true }));
+    this.cacheStore.set(key, { placeholder: true });
     options.error = this.wrapErrorWithInvalidate(key, model, options);
     options.success = this.wrapSuccessWithCache(key, model, options);
     return model.sync('read', model, options);
@@ -132,7 +131,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
       if (onError) {
         onError(response);
       }
-      self.invalidateCache(key);
+      self.cacheStore.invalidate(key);
       self.trigger(self.getCacheErrorEvent(key));
     });
   },
@@ -140,7 +139,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
   storeResponse: function (key, response, options) {
     var meta = this.getMetadata(key, response, options);
     var entry = { data: response, meta: meta };
-    this.backend.setItem(key, JSON.stringify(entry));
+    this.cacheStore.set(key, entry);
     this.trigger(this.getCacheSuccessEvent(key), response);
   },
 
@@ -179,7 +178,7 @@ _.extend(CacheControl.prototype, Backbone.Events, {
 
   onDelete: function (model, options) {
     var key = this.getCacheKey(model, 'delete');
-    this.invalidateCache(key);
+    this.cacheStore.invalidate(key);
     return model.sync('delete', model, options);
   }
 });
@@ -189,7 +188,6 @@ CacheControl.extend = Backbone.Model.extend;
 module.exports = {
   initialize: function (config) {
     HoardConfig = config;
-    CacheControl.prototype.backend = HoardConfig.backend;
     return CacheControl;
   }
 };
