@@ -4,7 +4,7 @@ var Backbone = require('backbone');
 var Hoard = require('./support/backbone.hoard');
 var Control = require('src/control');
 
-describe("Hoard.Control", function () {
+xdescribe("Hoard.Control", function () {
   var spec;
 
   beforeEach(function () {
@@ -55,44 +55,6 @@ describe("Hoard.Control", function () {
     });
   });
 
-  describe("storeResponse", function () {
-    beforeEach(function () {
-      this.sinon.spy(this.cacheControl, 'trigger');
-      this.cacheControl.storeResponse(this.modelUrl, this.serverResponse, {});
-    });
-
-    it("writes to the cache", function () {
-      expect(this.localStorage.setItem).to.have.been
-        .calledWith(this.modelUrl, this.storedResponse);
-    });
-
-    it("triggers a cache:success:[key] event with the response", function () {
-      expect(this.cacheControl.trigger).to.have.been
-        .calledWith(this.expectedEvent, this.serverResponse);
-    });
-  });
-
-  xdescribe("invalidateCache", function () {
-    beforeEach(function () {
-      this.Model = Backbone.Model.extend({
-        url: function () {
-          return spec.modelUrl;
-        }
-      });
-      this.model = new this.Model();
-
-      this.cacheControl = new Control();
-      this.sinon.stub(this.localStorage, 'removeItem');
-
-      this.cacheControl.invalidateCache(this.cacheControl.getCacheKey(this.model));
-    });
-
-    it("removes the key returned from getCacheKey from the backend", function () {
-      expect(this.localStorage.removeItem).to.have.been.calledOnce
-        .and.calledWith(this.modelUrl);
-    });
-  });
-
   xdescribe("getMetadata", function () {
     describe("cache expiration", function () {
       beforeEach(function () {
@@ -139,16 +101,6 @@ describe("Hoard.Control", function () {
       spec = this;
       this.model = new this.Model();
 
-      this.ajax = Hoard.deferred();
-      this.sinon.stub(Backbone, 'ajax', function (options) {
-        spec.syncResponse = spec.ajax.promise.then(function () {
-          options.success(spec.serverResponse);
-        }, function () {
-          options.error(spec.serverResponse);
-        });
-        return spec.syncResponse;
-      });
-
       this.success = this.sinon.stub();
       this.error = this.sinon.stub();
       this.options = {
@@ -156,91 +108,10 @@ describe("Hoard.Control", function () {
         error: this.error
       };
       this.placeholder = JSON.stringify({ placeholder: true });
-      this.sinon.spy(this.cacheControl, 'storeResponse');
+      //this.sinon.spy(this.cacheControl, 'storeResponse');
       this.store = this.cacheControl.store;
       this.sinon.spy(this.store, 'invalidate');
       this.sinon.spy(this.model, 'sync');
-    });
-
-    describe("with method create", function () {
-      beforeEach(function () {
-        this.sinon.spy(this.cacheControl, 'onCreate');
-        this.sinon.stub(this.localStorage, 'getItem').returns(this.storedResponse);
-        this.syncReturn = this.cacheControl.sync('create', this.model, this.options);
-      });
-
-      it("calls onCreate with the model and the options", function () {
-        expect(this.cacheControl.onCreate).to.have.been.calledOnce
-          .and.calledWith(this.model, this.options);
-      });
-
-      it("calls the underlying model's sync with the same arguments", function () {
-        expect(this.model.sync).to.have.been.calledOnce
-          .and.calledWith('create', this.model, this.options);
-      });
-
-      it("writes to the cache when the response returns", function (done) {
-        this.ajax.resolve();
-        this.syncReturn.then(function () {
-          expect(spec.cacheControl.storeResponse).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl, spec.serverResponse);
-          done();
-        });
-      });
-    });
-
-    describe("with method update", function () {
-      beforeEach(function () {
-        this.sinon.spy(this.cacheControl, 'onUpdate');
-        this.sinon.stub(this.localStorage, 'getItem').returns(this.storedResponse);
-        this.syncReturn = this.cacheControl.sync('update', this.model, this.options);
-      });
-
-      it("calls onUpdate with the model and the options", function () {
-        expect(this.cacheControl.onUpdate).to.have.been.calledOnce
-          .and.calledWith(this.model, this.options);
-      });
-
-      it("calls the underlying model's sync with the same arguments", function () {
-        expect(this.model.sync).to.have.been.calledOnce
-          .and.calledWith('update', this.model, this.options);
-      });
-
-      it("writes to the cache when the response returns", function (done) {
-        this.ajax.resolve();
-        this.syncReturn.then(function () {
-          expect(spec.cacheControl.storeResponse).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl, spec.serverResponse);
-          done();
-        });
-      });
-    });
-
-    describe("with method patch", function () {
-      beforeEach(function () {
-        this.sinon.spy(this.cacheControl, 'onPatch');
-        this.sinon.stub(this.localStorage, 'getItem').returns(this.storedResponse);
-        this.syncReturn = this.cacheControl.sync('patch', this.model, this.options);
-      });
-
-      it("calls onPatch with the model and the options", function () {
-        expect(this.cacheControl.onPatch).to.have.been.calledOnce
-          .and.calledWith(this.model, this.options);
-      });
-
-      it("calls the underlying model's sync with the same arguments", function () {
-        expect(this.model.sync).to.have.been.calledOnce
-          .and.calledWith('patch', this.model, this.options);
-      });
-
-      it("writes to the cache when the response returns", function (done) {
-        this.ajax.resolve();
-        this.syncReturn.then(function () {
-          expect(spec.cacheControl.storeResponse).to.have.been.calledOnce
-            .and.calledWith(spec.modelUrl, spec.serverResponse);
-          done();
-        });
-      });
     });
 
     describe("with method read", function () {
@@ -291,7 +162,7 @@ describe("Hoard.Control", function () {
             });
           });
 
-          it("writes to the cache when the response returns", function (done) {
+          xit("writes to the cache when the response returns", function (done) {
             this.ajax.resolve();
             this.syncReturn.then(function () {
               expect(spec.cacheControl.storeResponse).to.have.been.calledOnce

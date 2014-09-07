@@ -8,7 +8,7 @@ var mergeOptions = ['expires', 'timeToLive'];
 
 var Policy = function (options) {
   _.extend(this, _.pick(options, mergeOptions));
-  this.initialize.apply(this, options);
+  this.initialize.apply(this, arguments);
 };
 
 _.extend(Policy.prototype, Backbone.Events, {
@@ -34,10 +34,6 @@ _.extend(Policy.prototype, Backbone.Events, {
   },
 
   shouldEvictItem: function (cacheItem) {
-    if (cacheItem == null) {
-      return false;
-    }
-
     var meta = cacheItem.meta || {};
     if (meta.expires != null && meta.expires < Date.now()) {
       return true;

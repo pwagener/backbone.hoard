@@ -2,157 +2,89 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
+
 var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 var Policy = require('src/policy');
+var CreateStrategyClass = require('src/strategies/create');
+var ReadStrategyClass = require('src/strategies/read');
+var UpdateStrategyClass = require('src/strategies/update');
+var PatchStrategyClass = require('src/strategies/patch');
+var DeleteStrategyClass = require('src/strategies/delete');
 
-var mergeOptions = ['storeClass', 'policyClass'];
+var strategies = {
+  create: {
+    klass: CreateStrategyClass,
+    classProperty: 'createStrategyClass',
+    property: 'strategy'
+  },
 
-var Control = function (options) {
-  _.extend(this, _.pick(options || {}, mergeOptions), {
-    storeClass: Store,
-    policyClass: Policy
-  });
-  this.store = new this.storeClass(options);
-  this.policy = new this.policyClass(options);
-  this.initialize.apply(this, arguments);
+  read: {
+    klass: ReadStrategyClass,
+    classProperty: 'readStrategyClass',
+    property: 'readStrategy'
+  },
+
+  update: {
+    klass: UpdateStrategyClass,
+    classProperty: 'updateStrategyClass',
+    property: 'updateStrategy'
+  },
+
+  patch: {
+    klass: PatchStrategyClass,
+    classProperty: 'patchStrategyClass',
+    property: 'patchStrategy'
+  },
+
+  'delete': {
+    klass: DeleteStrategyClass,
+    classProperty: 'deleteStrategyClass',
+    property: 'deleteStrategy'
+  }
 };
 
-var methodHandlers = {
-  'create': 'onCreate',
-  'update': 'onUpdate',
-  'patch': 'onPatch',
-  'delete': 'onDelete',
-  'read': 'onRead'
+var mergeOptions = _.union(['storeClass', 'policyClass'],
+  _.pluck(strategies, 'classProperty'));
+
+var strategyClasses = {};
+_.each(strategies, function (strategy) {
+  strategyClasses[strategy.classProperty] = strategy.klass;
+});
+
+var Control = function (options) {
+  _.extend(this, _.pick(options || {}, mergeOptions));
+  var defaultClasses = _.extend({
+    storeClass: Store,
+    policyClass: Policy
+  }, strategyClasses);
+  _.defaults(this, defaultClasses);
+
+  this.store = new this.storeClass(options);
+  this.policy = new this.policyClass(options);
+  var strategyOptions = _.extend({}, options, {
+    store: this.store,
+    policy: this.policy
+  });
+
+  _.each(strategies, function (strategy) {
+    this[strategy.property] = new this[strategy.classProperty](strategyOptions);
+  }, this);
+
+  this.initialize.apply(this, arguments);
 };
 
 _.extend(Control.prototype, Backbone.Events, {
   initialize: function () {},
 
-  getCacheSuccessEvent: function (key) {
-    return 'cache:success:' + key;
-  },
-
-  getCacheErrorEvent: function (key) {
-    return 'cache:error:' + key;
-  },
-
   sync: function (method, model, options) {
-    var handlerName = methodHandlers[method];
-    return this[handlerName](model, options);
+    var strategyProperty = strategies[method];
+    var strategy = this[strategyProperty];
+    return strategy.execute(model, options);
   },
 
-  onRead: function (model, options) {
-    var key = this.policy.getKey(model, 'read');
-    var cachedItem = this.store.get(key);
-    if (this.policy.shouldEvictItem(cachedItem)) {
-      cachedItem = this.store.invalidate(key);
-    }
-
-    if (cachedItem === null) {
-      return this.onReadCacheMiss(key, model, options);
-    } else if (cachedItem.placeholder) {
-      return this.onReadCachePlaceholderHit(key, options);
-    } else {
-      return this.onReadCacheHit(cachedItem, options);
-    }
-  },
-
-  onReadCacheMiss: function (key, model, options) {
-    this.store.set(key, { placeholder: true });
-    options.error = this.wrapErrorWithInvalidate(key, model, options);
-    options.success = this.wrapSuccessWithCache(key, model, options);
-    return model.sync('read', model, options);
-  },
-
-  onReadCachePlaceholderHit: function (key, options) {
-    var deferred = Hoard.deferred();
-    var successEvent = this.getCacheSuccessEvent(key);
-    var errorEvent = this.getCacheErrorEvent(key);
-
-    var onSuccess = function (response) {
-      if (options.success) {
-        options.success(response);
-      }
-      this.off(errorEvent, onError);
-      Hoard.resolveDeferred(deferred, response);
-    };
-
-    var onError = function (response) {
-      if (options.error) {
-        options.error(response);
-      }
-      this.off(successEvent, onSuccess);
-      Hoard.resolveDeferred(deferred, response);
-    };
-
-    this.once(successEvent, onSuccess);
-    this.once(errorEvent, onError);
-    return deferred.promise;
-  },
-
-  onReadCacheHit: function (item, options) {
-    var deferred = Hoard.deferred();
-    Hoard.resolveDeferred(deferred, item);
-    return deferred.promise.then(function (item) {
-      var itemData = item.data;
-      if (options.success) {
-        options.success(itemData);
-      }
-      return itemData;
-    });
-  },
-
-  wrapSuccessWithCache: function (key, model, options) {
-    var self = this;
-    return _.wrap(options.success, function (onSuccess, response) {
-      if (onSuccess) {
-        onSuccess(response);
-      }
-      self.storeResponse(key, response, options);
-    });
-  },
-
-  wrapErrorWithInvalidate: function (key, model, options) {
-    var self = this;
-    return _.wrap(options.error, function (onError, response) {
-      if (onError) {
-        onError(response);
-      }
-      self.store.invalidate(key);
-      self.trigger(self.getCacheErrorEvent(key));
-    });
-  },
-
-  storeResponse: function (key, response, options) {
-    var meta = this.policy.getMetadata(key, response, options);
-    var entry = { data: response, meta: meta };
-    this.store.set(key, entry);
-    this.trigger(this.getCacheSuccessEvent(key), response);
-  },
-
-  onCreate: function (model, options) {
-    return this.cacheSuccess('create', model, options);
-  },
-
-  onUpdate: function (model, options) {
-    return this.cacheSuccess('update', model, options);
-  },
-
-  onPatch: function (model, options) {
-    return this.cacheSuccess('patch', model, options);
-  },
-
-  cacheSuccess: function (method, model, options) {
-    var key = this.policy.getKey(model, method);
-    options.success = this.wrapSuccessWithCache(key, model, options);
-    return model.sync(method, model, options);
-  },
-
-  onDelete: function (model, options) {
-    var key = this.policy.getKey(model, 'delete');
-    this.store.invalidate(key);
-    return model.sync('delete', model, options);
+  getModelSync: function () {
+    return _.bind(this.sync, this);
   }
 });
 

@@ -3,14 +3,6 @@
 var _ = require('underscore');
 
 module.exports = {
-  resolveDeferred: function (deferred, value) {
-    return deferred.resolve(value);
-  },
-
-  rejectDeferred: function (deferred, error) {
-    return deferred.reject(error);
-  },
-
   initialize: function (options) {
     _.extend(this, options);
 
