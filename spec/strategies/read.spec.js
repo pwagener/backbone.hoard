@@ -47,9 +47,9 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("returns a promise representing a cache access and a sync", function () {
-      var expectedPromise = this.cacheResponse.then(this.ajaxResponse);
-      expect(this.execution).to.deep.eql(expectedPromise);
+    it("returns a promise that resolves when the get and sync resolve", function (done) {
+      this.ajax.resolve(this.serverResponse);
+      this.execution.then(done);
     });
 
     it("writes a placeholder until the sync resolves", function (done) {
