@@ -21,7 +21,7 @@ describe("Positive write strategies", function () {
 
     this.storedResponse = { data: this.serverResponse, meta: this.metadata };
     this.sinon.stub(this.store, 'get').returns(when.resolve(this.storedResponse));
-    this.sinon.spy(this.store, 'set');
+    this.sinon.stub(this.store, 'set').returns(when.resolve());
 
     this.Model = Backbone.Model.extend({ url: this.key });
     this.model = new this.Model();

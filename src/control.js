@@ -15,7 +15,7 @@ var strategies = {
   create: {
     klass: CreateStrategyClass,
     classProperty: 'createStrategyClass',
-    property: 'strategy'
+    property: 'createStrategy'
   },
 
   read: {
@@ -77,7 +77,7 @@ _.extend(Control.prototype, Hoard.Events, {
   initialize: function () {},
 
   sync: function (method, model, options) {
-    var strategyProperty = strategies[method];
+    var strategyProperty = strategies[method].property;
     var strategy = this[strategyProperty];
     return strategy.execute(model, options);
   },
