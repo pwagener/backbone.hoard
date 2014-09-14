@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
-var Backbone = require('backbone');
+var Hoard = require('./backbone.hoard');
 
 var mergeOptions = ['expires', 'timeToLive'];
 
@@ -10,8 +10,11 @@ var Policy = function (options) {
   this.initialize.apply(this, arguments);
 };
 
-_.extend(Policy.prototype, Backbone.Events, {
+_.extend(Policy.prototype, Hoard.Events, {
   initialize: function () {},
+
+  // default to 5 minutes
+  timeToLive: 5 * 60 * 1000,
 
   getKey: function (model, method) {
     return _.result(model, 'url');
@@ -42,6 +45,6 @@ _.extend(Policy.prototype, Backbone.Events, {
   }
 });
 
-Policy.extend = Backbone.Model.extend;
+Policy.extend = Hoard.extend;
 
 module.exports = Policy;

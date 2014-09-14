@@ -44,58 +44,6 @@ xdescribe("Hoard.Control", function () {
     });
   });
 
-  xdescribe("getCacheKey", function () {
-    beforeEach(function () {
-      this.model = new this.Model();
-      this.key = this.cacheControl.getCacheKey(this.model);
-    });
-
-    it("should return the result of the url, by default", function () {
-      expect(this.key).to.equal(this.modelUrl);
-    });
-  });
-
-  xdescribe("getMetadata", function () {
-    describe("cache expiration", function () {
-      beforeEach(function () {
-        this.clock = this.sinon.useFakeTimers(5);
-      });
-
-      afterEach(function () {
-        this.clock.restore();
-      });
-
-      it("sets expiration based on the expires property", function () {
-        var cacheControl = new Control({ expires: 1234 });
-        expect(cacheControl.getMetadata()).to.eql({ expires: 1234 });
-      });
-
-      it("overrides the expires property with the options", function () {
-        var cacheControl = new Control({ expires: 1234 });
-        var meta = cacheControl.getMetadata('key', 'response', { expires: 1 });
-        expect(meta).to.eql({ expires: 1 });
-      });
-
-      it("uses the timeToLive property to calculate expires", function () {
-        var cacheControl = new Control({ timeToLive: 10 });
-        var meta = cacheControl.getMetadata();
-        expect(meta).to.eql({ expires: 15 });
-      });
-
-      it("overrides the expires property with the options", function () {
-        var cacheControl = new Control({ timeToLive: 10 });
-        var meta = cacheControl.getMetadata('key', 'response', { timeToLive: 5});
-        expect(meta).to.eql({ expires: 10 });
-      });
-
-      it("prefers expires to timeToLive", function () {
-        var cacheControl = new Control({ expires: 100, timeToLive: 10 });
-        var meta = cacheControl.getMetadata();
-        expect(meta).to.eql({ expires: 100 });
-      });
-    });
-  });
-
   describe("sync", function () {
     beforeEach(function () {
       spec = this;
