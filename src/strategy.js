@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
-var Backbone = require('backbone');
+var Hoard = require('./backbone.hoard');
 
 var mergeOptions = ['store', 'policy'];
 
@@ -10,14 +10,14 @@ var Strategy = function (options) {
   this.initialize.apply(this, arguments);
 };
 
-_.extend(Strategy.prototype, Backbone.Events, {
+_.extend(Strategy.prototype, Hoard.Events, {
   initialize: function () {},
 
   execute: function (model, options) {
-    return model.sync(method, model, options);
+    throw new Error("Strategy#execute must be implemented");
   }
 });
 
-Strategy.extend = Backbone.Model.extend;
+Strategy.extend = Hoard.extend;
 
 module.exports = Strategy;

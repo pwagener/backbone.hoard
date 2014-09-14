@@ -31,14 +31,9 @@ var stubAjax = function (spec) {
 
 beforeEach(function () {
   this.sinon = sinon.sandbox.create();
-  this.localStorage = Hoard.backend;
-  this.sinon.stub(this.localStorage, 'setItem');
-  this.sinon.stub(this.localStorage, 'getItem');
-  this.sinon.stub(this.localStorage, 'removeItem');
   stubAjax(this);
 });
 
 afterEach(function () {
   this.sinon.restore();
-  this.localStorage.clear();
 });

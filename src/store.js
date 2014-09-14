@@ -1,19 +1,17 @@
 'use strict';
 
 var _ = require('underscore');
-var Backbone = require('backbone');
 var Hoard = require('./backbone.hoard');
 
 var mergeOptions = ['backend'];
 
 var Store = function (options) {
-  _.extend(this, _.pick(options || {}, mergeOptions), {
-    backend: Hoard.backend
-  });
+  _.extend(this, _.pick(options || {}, mergeOptions));
+  _.defaults(this, { backend: Hoard.backend });
   this.initialize.apply(this, arguments);
 };
 
-_.extend(Store.prototype, Backbone.Events, {
+_.extend(Store.prototype, Hoard.Events, {
   initialize: function () {},
 
   set: function (key, value, options) {
@@ -47,6 +45,6 @@ _.extend(Store.prototype, Backbone.Events, {
   }
 });
 
-Store.extend = Backbone.Model.extend;
+Store.extend = Hoard.extend;
 
 module.exports = Store;

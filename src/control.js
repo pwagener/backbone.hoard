@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('underscore');
-var Backbone = require('backbone');
 
 var Hoard = require('./backbone.hoard');
 var Store = require('./store');
@@ -74,7 +73,7 @@ var Control = function (options) {
   this.initialize.apply(this, arguments);
 };
 
-_.extend(Control.prototype, Backbone.Events, {
+_.extend(Control.prototype, Hoard.Events, {
   initialize: function () {},
 
   sync: function (method, model, options) {
@@ -88,6 +87,6 @@ _.extend(Control.prototype, Backbone.Events, {
   }
 });
 
-Control.extend = Backbone.Model.extend;
+Control.extend = Hoard.extend;
 
 module.exports = Control;
