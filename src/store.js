@@ -2,7 +2,7 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var Hoard = require('src/backbone.hoard');
+var Hoard = require('./backbone.hoard');
 
 var mergeOptions = ['backend'];
 

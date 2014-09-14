@@ -1,9 +1,9 @@
 'use strict';
 
 var _ = require('underscore');
-var Hoard = require('src/backbone.hoard');
-var Strategy = require('src/strategy');
-var StrategyHelpers = require('src/strategies/helpers');
+var Hoard = require('./backbone.hoard');
+var Strategy = require('./strategy');
+var StrategyHelpers = require('./strategy-helpers');
 
 var promiseWrapResponse = function (method, promise) {
   return function (response) {

@@ -4,7 +4,7 @@ var when = require('when');
 var Store = require('src/store');
 var Policy = require('src/policy');
 var Backbone = require('backbone');
-var DeleteStrategy = require('src/strategies/delete');
+var DeleteStrategy = require('src/delete-strategy');
 
 describe("Delete Strategy", function () {
   beforeEach(function () {

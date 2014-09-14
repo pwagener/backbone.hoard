@@ -1,7 +1,7 @@
 'use strict';
 
-var Strategy = require('src/strategy');
-var StrategyHelpers = require('src/strategies/helpers');
+var Strategy = require('./strategy');
+var StrategyHelpers = require('./strategy-helpers');
 
 module.exports = Strategy.extend({
   execute: function (model, options) {

@@ -3,14 +3,14 @@
 var _ = require('underscore');
 var Backbone = require('backbone');
 
-var Hoard = require('src/backbone.hoard');
-var Store = require('src/store');
-var Policy = require('src/policy');
-var CreateStrategyClass = require('src/strategies/create');
-var ReadStrategyClass = require('src/strategies/read');
-var UpdateStrategyClass = require('src/strategies/update');
-var PatchStrategyClass = require('src/strategies/patch');
-var DeleteStrategyClass = require('src/strategies/delete');
+var Hoard = require('./backbone.hoard');
+var Store = require('./store');
+var Policy = require('./policy');
+var CreateStrategyClass = require('./create-strategy');
+var ReadStrategyClass = require('./read-strategy');
+var UpdateStrategyClass = require('./update-strategy');
+var PatchStrategyClass = require('./patch-strategy');
+var DeleteStrategyClass = require('./delete-strategy');
 
 var strategies = {
   create: {

@@ -4,9 +4,9 @@ var Backbone = require('backbone');
 var when = require('when');
 var Store = require('src/store');
 var Policy = require('src/policy');
-var CreateStrategy = require('src/strategies/create');
-var UpdateStrategy = require('src/strategies/update');
-var PatchStrategy = require('src/strategies/patch');
+var CreateStrategy = require('src/create-strategy');
+var UpdateStrategy = require('src/update-strategy');
+var PatchStrategy = require('src/patch-strategy');
 
 describe("Positive write strategies", function () {
   beforeEach(function () {

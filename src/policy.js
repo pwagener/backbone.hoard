@@ -2,7 +2,6 @@
 
 var _ = require('underscore');
 var Backbone = require('backbone');
-var Hoard = require('src/backbone.hoard');
 
 var mergeOptions = ['expires', 'timeToLive'];
 

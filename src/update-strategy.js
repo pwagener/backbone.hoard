@@ -1,5 +1,5 @@
 'use strict';
 
-var PositiveWriteStrategy = require('src/strategies/positive-write');
+var PositiveWriteStrategy = require('./positive-write-strategy');
 
 module.exports = PositiveWriteStrategy.extend({ _method: 'update' });

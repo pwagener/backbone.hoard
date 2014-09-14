@@ -1,6 +1,6 @@
 'use strict';
 
-var Strategy = require('src/strategy');
+var Strategy = require('./strategy');
 
 var Delete = Strategy.extend({
   execute: function (model, options) {

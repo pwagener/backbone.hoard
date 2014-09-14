@@ -4,8 +4,8 @@ var when = require('when');
 var Store = require('src/store');
 var Policy = require('src/policy');
 var Backbone = require('backbone');
-var ReadStrategy = require('src/strategies/read');
-var Helpers = require('src/strategies/helpers');
+var ReadStrategy = require('src/read-strategy');
+var Helpers = require('src/strategy-helpers');
 
 describe("Read Strategy", function () {
   beforeEach(function () {
