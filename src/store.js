@@ -19,7 +19,7 @@ _.extend(Store.prototype, Hoard.Events, {
     var valueToStore = JSON.stringify(value);
     try {
       this.backend.setItem(key, valueToStore);
-      deferred.resolve(valueToStore);
+      deferred.resolve();
     } catch(e) {
       deferred.reject(e);
     }
