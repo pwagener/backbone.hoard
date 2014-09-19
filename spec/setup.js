@@ -10,8 +10,8 @@ global.expect = chai.expect;
 chai.use(sinonChai);
 
 var stubAjax = function (spec) {
-  var ajax = Hoard.deferred();
-  var ajaxResponse = Hoard.deferred();
+  var ajax = Hoard.defer();
+  var ajaxResponse = Hoard.defer();
 
   spec.ajax = ajax;
   spec.ajaxResponse = ajaxResponse.promise;

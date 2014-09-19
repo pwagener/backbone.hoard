@@ -10,14 +10,14 @@
   "license": "MIT",
   "devDependencies": {
     "chai": "^1.9.1",
+    "es6-promise": "^1.0.0",
     "exec-sync": "^0.1.6",
     "gulp": "^3.8.7",
     "gulp-mocha": "^1.0.0",
     "mocha": "^1.21.4",
     "node-localstorage": "^0.3.4",
     "sinon": "^1.10.3",
-    "sinon-chai": "^2.5.0",
-    "when": "^3.4.4"
+    "sinon-chai": "^2.5.0"
   },
   "dependencies": {
     "backbone": "^1.1.2",

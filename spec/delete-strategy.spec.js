@@ -1,6 +1,6 @@
 'use strict';
 
-var when = require('when');
+var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 var Policy = require('src/policy');
 var Backbone = require('backbone');
@@ -9,7 +9,7 @@ var DeleteStrategy = require('src/delete-strategy');
 describe("Delete Strategy", function () {
   beforeEach(function () {
     this.store = new Store();
-    this.sinon.stub(this.store, 'invalidate').returns(when.resolve());
+    this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
 
     this.policy = new Policy();
     this.key = 'key';

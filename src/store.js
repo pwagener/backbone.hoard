@@ -15,7 +15,7 @@ _.extend(Store.prototype, Hoard.Events, {
   initialize: function () {},
 
   set: function (key, value, options) {
-    var deferred = Hoard.deferred();
+    var deferred = Hoard.defer();
     var valueToStore = JSON.stringify(value);
     try {
       this.backend.setItem(key, valueToStore);
@@ -27,7 +27,7 @@ _.extend(Store.prototype, Hoard.Events, {
   },
 
   get: function (key, options) {
-    var deferred = Hoard.deferred();
+    var deferred = Hoard.defer();
     var storedValue = JSON.parse(this.backend.getItem(key));
     if (storedValue !== null) {
       deferred.resolve(storedValue);
@@ -38,10 +38,8 @@ _.extend(Store.prototype, Hoard.Events, {
   },
 
   invalidate: function (key) {
-    var deferred = Hoard.deferred();
     this.backend.removeItem(key);
-    deferred.resolve();
-    return deferred.promise;
+    return Hoard.Promise.resolve();
   }
 });
 

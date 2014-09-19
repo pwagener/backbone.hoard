@@ -1,6 +1,6 @@
 'use strict';
 
-var when = require('when');
+var Promise = require('es6-promise').Promise;
 var Hoard = require('src/backbone.hoard');
 
-module.exports = Hoard.initialize({ deferred: when.defer });
+module.exports = Hoard.initialize({ Promise: Promise });

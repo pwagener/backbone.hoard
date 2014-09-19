@@ -1,7 +1,7 @@
 'use strict';
 
 var Backbone = require('backbone');
-var when = require('when');
+var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 var Policy = require('src/policy');
 var CreateStrategy = require('src/create-strategy');
@@ -20,8 +20,8 @@ describe("Positive write strategies", function () {
     this.sinon.stub(this.policy, 'getMetadata').returns(this.metadata);
 
     this.storedResponse = { data: this.serverResponse, meta: this.metadata };
-    this.sinon.stub(this.store, 'get').returns(when.resolve(this.storedResponse));
-    this.sinon.stub(this.store, 'set').returns(when.resolve());
+    this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.storedResponse));
+    this.sinon.stub(this.store, 'set').returns(Hoard.Promise.resolve());
 
     this.Model = Backbone.Model.extend({ url: this.key });
     this.model = new this.Model();

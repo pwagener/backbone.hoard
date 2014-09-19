@@ -1,6 +1,6 @@
 'use strict';
 
-var when = require('when');
+var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 var Policy = require('src/policy');
 var Backbone = require('backbone');
@@ -32,10 +32,10 @@ describe("Read Strategy", function () {
 
   describe("on a cache miss", function () {
     beforeEach(function () {
-      this.cacheResponse = when.reject();
+      this.cacheResponse = Hoard.Promise.reject();
       this.sinon.stub(this.store, 'get').returns(this.cacheResponse);
 
-      this.setPromise = when.resolve();
+      this.setPromise = Hoard.Promise.resolve();
       this.sinon.stub(this.store, 'set').returns(this.setPromise);
       this.sinon.stub(this.store, 'invalidate');
 
@@ -84,12 +84,12 @@ describe("Read Strategy", function () {
 
   describe("on an expired cache hit", function () {
     beforeEach(function () {
-      this.getPromise = when.resolve();
+      this.getPromise = Hoard.Promise.resolve();
       this.sinon.stub(this.store, 'get').returns(this.getPromise);
       this.sinon.stub(this.policy, 'shouldEvictItem').returns(true);
-      this.invalidated = when.resolve();
+      this.invalidated = Hoard.Promise.resolve();
       this.sinon.stub(this.store, 'invalidate').returns(this.invalidated);
-      var cacheMissed = this.cacheMissed = when.defer();
+      var cacheMissed = this.cacheMissed = Hoard.defer();
       this.sinon.stub(this.strategy, 'onCacheMiss', function () {
         cacheMissed.resolve();
         return cacheMissed.promise;
@@ -118,7 +118,7 @@ describe("Read Strategy", function () {
 
   describe("on a placeholder cache hit", function () {
     beforeEach(function () {
-      this.getPromise = when.resolve({ placeholder: true });
+      this.getPromise = Hoard.Promise.resolve({ placeholder: true });
       this.sinon.stub(this.store, 'get').returns(this.getPromise);
       this.serverResponse = { myResponse: true };
       this.execution = this.strategy.execute(this.model, this.options);
@@ -152,7 +152,7 @@ describe("Read Strategy", function () {
   describe("on a cache hit", function () {
     beforeEach(function () {
       this.cacheItem = { data: {} };
-      this.sinon.stub(this.store, 'get').returns(when.resolve(this.cacheItem));
+      this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.cacheItem));
       this.sinon.stub(this.policy, 'shouldEvictItem').returns(false);
       this.execution = this.strategy.execute(this.model, this.options);
     });

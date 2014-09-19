@@ -1,6 +1,5 @@
 'use strict';
 
-var when = require('when');
 var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 
