@@ -2,45 +2,52 @@
 
 var _ = require('underscore');
 var Hoard = require('./backbone.hoard');
+var MetaStore = require('./meta-store');
+var StoreHelpers = require('./store-helpers');
 
-var mergeOptions = ['backend'];
+var mergeOptions = ['backend', 'metaStoreClass'];
 
 var Store = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions));
-  _.defaults(this, { backend: Hoard.backend });
+  _.defaults(this, {
+    backend: Hoard.backend,
+    metaStoreClass: MetaStore
+  });
+  this.metaStore = new this.metaStoreClass(mergeOptions);
   this.initialize.apply(this, arguments);
 };
 
 _.extend(Store.prototype, Hoard.Events, {
   initialize: function () {},
 
-  set: function (key, value, options) {
-    var deferred = Hoard.defer();
-    var valueToStore = JSON.stringify(value);
-    try {
-      this.backend.setItem(key, valueToStore);
-      deferred.resolve();
-    } catch(e) {
-      deferred.reject(e);
-    }
-    return deferred.promise;
+  set: function (key, item, meta, options) {
+    var storedItem = JSON.stringify(item);
+    var metaWithSize = _.extend({ size: storedItem.length }, meta);
+    var itemPromise = this._setItem(key, storedItem);
+    var metaPromise = this.metaStore.set(key, metaWithSize, options);
+    var setPromise = Hoard.Promise.all([itemPromise, metaPromise]);
+    return setPromise.then(undefined, _.bind(this.onSetError, this, key, options));
   },
 
-  get: function (key, options) {
-    var deferred = Hoard.defer();
-    var storedValue = JSON.parse(this.backend.getItem(key));
-    if (storedValue !== null) {
-      deferred.resolve(storedValue);
-    } else {
-      deferred.reject();
-    }
-    return deferred.promise;
-  },
+  get: StoreHelpers.proxyGetItem,
 
-  invalidate: function (key) {
+  invalidate: function (key, options) {
     this.backend.removeItem(key);
+    this.metaStore.invalidate(key, options);
     return Hoard.Promise.resolve();
-  }
+  },
+
+  getAllMetadata: function (options) {
+    return this.metaStore.getAll(options);
+  },
+
+  onSetError: function (key, options) {
+    return this.invalidate(key, options).then(function () {
+      return Hoard.Promise.reject();
+    });
+  },
+
+  _setItem: StoreHelpers.proxySetItem
 });
 
 Store.extend = Hoard.extend;

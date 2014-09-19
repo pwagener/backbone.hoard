@@ -12,8 +12,7 @@ var getSyncErrorEvent = function (key) {
 
 var storeResponse = function (context, key, response, options) {
   var meta = context.policy.getMetadata(key, response, options);
-  var entry = { data: response, meta: meta };
-  context.store.set(key, entry);
+  context.store.set(key, response, meta);
   context.trigger(getSyncSuccessEvent(key), response);
 };
 

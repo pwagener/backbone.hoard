@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('underscore');
 var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
 
@@ -12,39 +13,81 @@ describe("Store", function () {
     };
 
     this.store = new Store();
+    this.sinon.stub(this.store.metaStore, 'set');
+    this.sinon.stub(this.store.metaStore, 'invalidate').returns(Hoard.Promise.resolve());
 
     this.key = 'key';
     this.value = { myValue: true };
+    this.meta = { myMeta: true };
+    this.options = {};
     this.stringValue = JSON.stringify(this.value);
   });
 
   describe("set", function () {
     describe("when it succeeds", function () {
       beforeEach(function () {
-        this.result = this.store.set(this.key, this.value);
+        this.store.metaStore.set.withArgs(this.key, this.meta, this.options)
+          .returns(Hoard.Promise.resolve());
+        this.result = this.store.set(this.key, this.value, this.meta, this.options);
       });
 
       it("stores the provided value in JSON form", function () {
-        expect(this.store.backend.setItem).to.have.been.calledOnce
-          .and.calledWith(this.key, this.stringValue);
+        expect(this.store.backend.setItem).to.have
+          .been.calledWith(this.key, this.stringValue);
       });
 
-      it("resolves the returned promise", function (done) {
-        this.result.then(function (storedResult) {
-          done();
-        });
+      it("stores the provided metadata with the size of the stored item", function () {
+        var expectedMeta = _.extend({ size: this.stringValue.length }, this.meta);
+        expect(this.store.metaStore.set).to.have.been.calledOnce
+          .and.calledWith(this.key, expectedMeta, this.options);
+      });
+
+      it("returns a resovled promise", function (done) {
+        this.result.then(function () { done(); });
       });
     });
 
-    describe("when it fails", function () {
+    describe("when it fails to store the item", function () {
       beforeEach(function () {
+        this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
+        this.store.metaStore.set.returns(Hoard.Promise.resolve());
         this.store.backend.setItem.withArgs(this.key, this.stringValue).throws();
-        this.result = this.store.set(this.key, this.value);
+        this.result = this.store.set(this.key, this.value, this.meta, this.options);
       });
 
-      it("rejects the returnd promise", function (done) {
-        this.result.then(function () {}, function () { done(); });
+      it("invalidates the key", function (done) {
+        var spec = this;
+        this.result.catch(function () {
+          expect(spec.store.invalidate).to.have.been.calledOnce
+            .and.calledWith(spec.key, spec.options);
+          done();
+        });
       });
+
+      it("returns a rejected promise", function (done) {
+        this.result.catch(function () { done(); });
+      });
+    });
+  });
+
+  describe("when the meta store fails to store the metadata", function () {
+    beforeEach(function () {
+      this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
+      this.store.metaStore.set.returns(Hoard.Promise.reject());
+      this.result = this.store.set(this.key, this.value, this.meta, this.options);
+    });
+
+    it("invalidates the key", function (done) {
+      var spec = this;
+      this.result.catch(function () {
+        expect(spec.store.invalidate).to.have.been.calledOnce
+          .and.calledWith(spec.key, spec.options);
+        done();
+      });
+    });
+
+    it("returns a rejected promise", function (done) {
+      this.result.catch(function () { done(); });
     });
   });
 
@@ -78,7 +121,7 @@ describe("Store", function () {
 
   describe("invalidate", function () {
     beforeEach(function () {
-      this.result = this.store.invalidate(this.key);
+      this.result = this.store.invalidate(this.key, this.options);
     });
 
     it("removes the item from the cache", function () {
@@ -86,8 +129,30 @@ describe("Store", function () {
         .and.calledWith(this.key);
     });
 
-    it("resolves the returned promise", function (done) {
+    it("invalidates the meta store entry for the key", function () {
+      expect(this.store.metaStore.invalidate).to.have.been.calledOnce
+        .and.calledWith(this.key, this.options);
+    });
+
+    it("returns a resolved promise", function (done) {
       this.result.then(function () { done(); });
+    });
+  });
+
+  describe("getAllMetadata", function () {
+    beforeEach(function () {
+      this.allMeta = { allMeta: true };
+      this.sinon.stub(this.store.metaStore, 'getAll')
+        .returns(Hoard.Promise.resolve(this.allMeta));
+      this.result = this.store.getAllMetadata(this.options);
+    });
+
+    it("returns all metadata from the meta store", function (done) {
+      var spec = this;
+      this.result.then(function (meta) {
+        expect(meta).to.eql(spec.allMeta);
+        done();
+      });
     });
   });
 });

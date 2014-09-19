@@ -39,10 +39,9 @@ describe("Read Strategy", function () {
       this.sinon.stub(this.store, 'set').returns(this.setPromise);
       this.sinon.stub(this.store, 'invalidate');
 
-      this.metadata = {};
+      this.metadata = { myMeta: true};
       this.serverResponse = { myResponse: true };
       this.sinon.stub(this.policy, 'getMetadata').returns(this.metadata);
-      this.storedResponse = { data: this.serverResponse, meta: this.metadata };
 
       this.execution = this.strategy.execute(this.model, this.options);
     });
@@ -66,7 +65,7 @@ describe("Read Strategy", function () {
       this.ajax.resolve(this.serverResponse);
       this.strategy.on(Helpers.getSyncSuccessEvent(this.key), function () {
         expect(spec.store.set).to.have.been.calledTwice
-          .and.calledWith(spec.key, spec.storedResponse);
+          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
         done();
       });
     });

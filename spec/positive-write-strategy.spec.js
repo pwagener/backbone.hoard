@@ -13,14 +13,13 @@ describe("Positive write strategies", function () {
     this.store = new Store();
 
     this.policy = new Policy();
-    this.metadata = {};
+    this.metadata = { myMeta: true };
     this.key = 'key';
     this.serverResponse = { myResponse: true };
     this.sinon.stub(this.policy, 'getKey').returns(this.key);
     this.sinon.stub(this.policy, 'getMetadata').returns(this.metadata);
 
-    this.storedResponse = { data: this.serverResponse, meta: this.metadata };
-    this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.storedResponse));
+    this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.serverResponse));
     this.sinon.stub(this.store, 'set').returns(Hoard.Promise.resolve());
 
     this.Model = Backbone.Model.extend({ url: this.key });
@@ -56,7 +55,7 @@ describe("Positive write strategies", function () {
       this.ajax.resolve(this.serverResponse);
       this.ajaxResponse.then(function () {
         expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.storedResponse);
+          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
         done();
       });
     });
@@ -85,7 +84,7 @@ describe("Positive write strategies", function () {
       this.ajax.resolve(this.serverResponse);
       this.ajaxResponse.then(function () {
         expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.storedResponse);
+          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
         done();
       });
     });
@@ -114,7 +113,7 @@ describe("Positive write strategies", function () {
       this.ajax.resolve(this.serverResponse);
       this.ajaxResponse.then(function () {
         expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.storedResponse);
+          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
         done();
       });
     });
