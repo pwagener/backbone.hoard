@@ -2,20 +2,19 @@
 
 var _ = require('underscore');
 
-var getCacheSuccessEvent = function (key) {
-  return 'cache:success:' + key;
+var getSyncSuccessEvent = function (key) {
+  return 'sync:success:' + key;
 };
 
-var getCacheErrorEvent = function (key) {
-  return 'cache:error:' + key;
+var getSyncErrorEvent = function (key) {
+  return 'sync:error:' + key;
 };
 
 var storeResponse = function (context, key, response, options) {
   var meta = context.policy.getMetadata(key, response, options);
   var entry = { data: response, meta: meta };
-  context.store.set(key, entry).then(function () {
-    context.trigger(getCacheSuccessEvent(key), response);
-  });
+  context.store.set(key, entry);
+  context.trigger(getSyncSuccessEvent(key), response);
 };
 
 var wrapSuccessWithCache = function (context, method, model, options) {
@@ -35,7 +34,7 @@ var wrapErrorWithInvalidate = function (context, method, model, options) {
     }
     var key = context.policy.getKey(model, method);
     context.store.invalidate(key);
-    context.trigger(getCacheErrorEvent(key));
+    context.trigger(getSyncErrorEvent(key));
   });
 };
 
@@ -46,9 +45,9 @@ var cacheSuccess = function (context, method, model, options) {
 };
 
 module.exports = {
-  getCacheSuccessEvent: getCacheSuccessEvent,
+  getSyncSuccessEvent: getSyncSuccessEvent,
 
-  getCacheErrorEvent: getCacheErrorEvent,
+  getSyncErrorEvent: getSyncErrorEvent,
 
   proxyWrapSuccessWithCache: function (method, model, options) {
     return wrapSuccessWithCache(this, method, model, options);

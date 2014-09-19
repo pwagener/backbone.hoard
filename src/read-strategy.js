@@ -45,8 +45,8 @@ var Read = Strategy.extend({
 
   _onPlaceholderHit: function (key, options) {
     var deferred = Hoard.deferred();
-    var successEvent = StrategyHelpers.getCacheSuccessEvent(key);
-    var errorEvent = StrategyHelpers.getCacheErrorEvent(key);
+    var successEvent = StrategyHelpers.getSyncSuccessEvent(key);
+    var errorEvent = StrategyHelpers.getSyncErrorEvent(key);
 
     var onSuccess = function (response) {
       if (options.success) {

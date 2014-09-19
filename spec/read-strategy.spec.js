@@ -64,7 +64,7 @@ describe("Read Strategy", function () {
     it("writes to the cache on a successful sync", function (done) {
       var spec = this;
       this.ajax.resolve(this.serverResponse);
-      this.strategy.on(Helpers.getCacheSuccessEvent(this.key), function () {
+      this.strategy.on(Helpers.getSyncSuccessEvent(this.key), function () {
         expect(spec.store.set).to.have.been.calledTwice
           .and.calledWith(spec.key, spec.storedResponse);
         done();
@@ -74,7 +74,7 @@ describe("Read Strategy", function () {
     it("invalidates the cache on a failed sync", function (done) {
       var spec = this;
       this.ajax.reject(this.serverResponse);
-      this.strategy.on(Helpers.getCacheErrorEvent(this.key), function () {
+      this.strategy.on(Helpers.getSyncErrorEvent(this.key), function () {
         expect(spec.store.invalidate).to.have.been.calledOnce
           .and.calledWith(spec.key);
         done();
@@ -127,7 +127,7 @@ describe("Read Strategy", function () {
     it("calls options.success on a successful cache event", function (done) {
       var spec = this;
       this.getPromise.then(function () {
-        spec.strategy.trigger(Helpers.getCacheSuccessEvent(spec.key), spec.serverResponse);
+        spec.strategy.trigger(Helpers.getSyncSuccessEvent(spec.key), spec.serverResponse);
       });
       this.execution.then(function () {
         expect(spec.options.success).to.have.been.calledOnce
@@ -139,7 +139,7 @@ describe("Read Strategy", function () {
     it("calls options.error on an error cache event", function (done) {
       var spec = this;
       this.getPromise.then(function () {
-        spec.strategy.trigger(Helpers.getCacheErrorEvent(spec.key), spec.serverResponse);
+        spec.strategy.trigger(Helpers.getSyncErrorEvent(spec.key), spec.serverResponse);
       });
       this.execution.then(this.sinon.stub(), function () {
         expect(spec.options.error).to.have.been.calledOnce
