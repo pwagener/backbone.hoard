@@ -46,38 +46,34 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("returns a promise that resolves when the get and sync resolve", function (done) {
+    it("returns a promise that resolves when the get and sync resolve", function () {
       this.ajax.resolve(this.serverResponse);
-      this.execution.then(done);
+      return expect(this.execution).to.have.been.fulfilled;
     });
 
-    it("writes a placeholder until the sync resolves", function (done) {
-      var spec = this;
-      this.setPromise.then(function () {
-        expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, { placeholder: true });
-        done();
-      });
+    it("writes a placeholder until the sync resolves", function () {
+      return this.setPromise.then(function () {
+        expect(this.store.set).to.have.been.calledOnce
+          .and.calledWith(this.key, { placeholder: true });
+      }.bind(this));
     });
 
     it("writes to the cache on a successful sync", function (done) {
-      var spec = this;
       this.ajax.resolve(this.serverResponse);
       this.strategy.on(Helpers.getSyncSuccessEvent(this.key), function () {
-        expect(spec.store.set).to.have.been.calledTwice
-          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
+        expect(this.store.set).to.have.been.calledTwice
+          .and.calledWith(this.key, this.serverResponse, this.metadata);
         done();
-      });
+      }.bind(this));
     });
 
     it("invalidates the cache on a failed sync", function (done) {
-      var spec = this;
       this.ajax.reject(this.serverResponse);
       this.strategy.on(Helpers.getSyncErrorEvent(this.key), function () {
-        expect(spec.store.invalidate).to.have.been.calledOnce
-          .and.calledWith(spec.key);
+        expect(this.store.invalidate).to.have.been.calledOnce
+          .and.calledWith(this.key);
         done();
-      });
+      }.bind(this));
     });
   });
 
@@ -96,22 +92,18 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("invalidates the cache", function (done) {
-      var spec = this;
-      this.getPromise.then(function () {
-        expect(spec.store.invalidate).to.have.been.calledOnce
-          .and.calledWith(spec.key);
-        done();
-      });
+    it("invalidates the cache", function () {
+      return this.getPromise.then(function () {
+        expect(this.store.invalidate).to.have.been.calledOnce
+          .and.calledWith(this.key);
+      }.bind(this));
     });
 
-    it("acts as a cache miss", function (done) {
-      var spec = this;
-      this.cacheMissed.promise.then(function () {
-        expect(spec.strategy.onCacheMiss).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.model, spec.options);
-        done();
-      });
+    it("acts as a cache miss", function () {
+      return this.cacheMissed.promise.then(function () {
+        expect(this.strategy.onCacheMiss).to.have.been.calledOnce
+          .and.calledWith(this.key, this.model, this.options);
+      }.bind(this));
     });
   });
 
@@ -123,28 +115,24 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("calls options.success on a successful cache event", function (done) {
-      var spec = this;
+    it("calls options.success on a successful cache event", function () {
       this.getPromise.then(function () {
-        spec.strategy.trigger(Helpers.getSyncSuccessEvent(spec.key), spec.serverResponse);
-      });
-      this.execution.then(function () {
-        expect(spec.options.success).to.have.been.calledOnce
-          .and.calledWith(spec.serverResponse);
-        done();
-      });
+        this.strategy.trigger(Helpers.getSyncSuccessEvent(this.key), this.serverResponse);
+      }.bind(this));
+      return this.execution.then(function () {
+        expect(this.options.success).to.have.been.calledOnce
+          .and.calledWith(this.serverResponse);
+      }.bind(this));
     });
 
-    it("calls options.error on an error cache event", function (done) {
-      var spec = this;
+    it("calls options.error on an error cache event", function () {
       this.getPromise.then(function () {
-        spec.strategy.trigger(Helpers.getSyncErrorEvent(spec.key), spec.serverResponse);
-      });
-      this.execution.then(this.sinon.stub(), function () {
-        expect(spec.options.error).to.have.been.calledOnce
-          .and.calledWith(spec.serverResponse);
-        done();
-      });
+        this.strategy.trigger(Helpers.getSyncErrorEvent(this.key), this.serverResponse);
+      }.bind(this));
+      return this.execution.then(undefined, function () {
+        expect(this.options.error).to.have.been.calledOnce
+          .and.calledWith(this.serverResponse);
+      }.bind(this));
     });
   });
 
@@ -156,13 +144,11 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("calls options.success with the retreived item", function (done) {
-      var spec = this;
-      this.execution.then(function () {
-        expect(spec.options.success).to.have.been.calledOnce
-          .and.calledWith(spec.cacheItem.data);
-        done();
-      });
+    it("calls options.success with the retreived item", function () {
+      return this.execution.then(function () {
+        expect(this.options.success).to.have.been.calledOnce
+          .and.calledWith(this.cacheItem.data);
+      }.bind(this));
     });
   });
 });

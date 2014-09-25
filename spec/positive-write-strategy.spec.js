@@ -50,14 +50,12 @@ describe("Positive write strategies", function () {
         .and.calledWith('create', this.model, this.options);
     });
 
-    it("writes to the cache when the response returns", function (done) {
-      var spec = this;
+    it("writes to the cache when the response returns", function () {
       this.ajax.resolve(this.serverResponse);
-      this.ajaxResponse.then(function () {
-        expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
-        done();
-      });
+      return this.ajaxResponse.then(function () {
+        expect(this.store.set).to.have.been.calledOnce
+          .and.calledWith(this.key, this.serverResponse, this.metadata);
+      }.bind(this));
     });
   });
 
@@ -79,14 +77,12 @@ describe("Positive write strategies", function () {
         .and.calledWith('update', this.model, this.options);
     });
 
-    it("writes to the cache when the response returns", function (done) {
-      var spec = this;
+    it("writes to the cache when the response returns", function () {
       this.ajax.resolve(this.serverResponse);
-      this.ajaxResponse.then(function () {
-        expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
-        done();
-      });
+      return this.ajaxResponse.then(function () {
+        expect(this.store.set).to.have.been.calledOnce
+          .and.calledWith(this.key, this.serverResponse, this.metadata);
+      }.bind(this));
     });
   });
 
@@ -108,14 +104,12 @@ describe("Positive write strategies", function () {
         .and.calledWith('patch', this.model, this.options);
     });
 
-    it("writes to the cache when the response returns", function (done) {
-      var spec = this;
+    it("writes to the cache when the response returns", function () {
       this.ajax.resolve(this.serverResponse);
-      this.ajaxResponse.then(function () {
-        expect(spec.store.set).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.serverResponse, spec.metadata);
-        done();
-      });
+      return this.ajaxResponse.then(function () {
+        expect(this.store.set).to.have.been.calledOnce
+          .and.calledWith(this.key, this.serverResponse, this.metadata);
+      }.bind(this));
     });
   });
 });

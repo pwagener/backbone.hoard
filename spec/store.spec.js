@@ -42,8 +42,8 @@ describe("Store", function () {
           .and.calledWith(this.key, expectedMeta, this.options);
       });
 
-      it("returns a resovled promise", function (done) {
-        this.result.then(function () { done(); });
+      it("returns a resovled promise", function () {
+        return expect(this.result).to.have.been.fulfilled;
       });
     });
 
@@ -64,8 +64,8 @@ describe("Store", function () {
         });
       });
 
-      it("returns a rejected promise", function (done) {
-        this.result.catch(function () { done(); });
+      it("returns a rejected promise", function () {
+        return expect(this.result).to.have.been.rejected;
       });
     });
   });
@@ -77,17 +77,15 @@ describe("Store", function () {
       this.result = this.store.set(this.key, this.value, this.meta, this.options);
     });
 
-    it("invalidates the key", function (done) {
-      var spec = this;
-      this.result.catch(function () {
-        expect(spec.store.invalidate).to.have.been.calledOnce
-          .and.calledWith(spec.key, spec.options);
-        done();
-      });
+    it("invalidates the key", function () {
+      return this.result.catch(function () {
+        expect(this.store.invalidate).to.have.been.calledOnce
+          .and.calledWith(this.key, this.options);
+      }.bind(this));
     });
 
-    it("returns a rejected promise", function (done) {
-      this.result.catch(function () { done(); });
+    it("returns a rejected promise", function () {
+      return expect(this.result).to.have.been.rejected;
     });
   });
 
@@ -98,12 +96,8 @@ describe("Store", function () {
         this.result = this.store.get(this.key);
       });
 
-      it("resolves the returned promise with the stored value", function (done) {
-        var spec = this;
-        this.result.then(function (returnedResult) {
-          expect(returnedResult).to.eql(spec.value);
-          done();
-        });
+      it("resolves the returned promise with the stored value", function () {
+        return expect(this.result).to.eventually.eql(this.value);
       });
     });
 
@@ -113,8 +107,8 @@ describe("Store", function () {
         this.result = this.store.get(this.key);
       });
 
-      it("rejects the returnd promise", function (done) {
-        this.result.then(function () {}, function () { done(); });
+      it("rejects the returnd promise", function () {
+        return expect(this.result).to.have.been.rejected;
       });
     });
   });
@@ -134,8 +128,8 @@ describe("Store", function () {
         .and.calledWith(this.key, this.options);
     });
 
-    it("returns a resolved promise", function (done) {
-      this.result.then(function () { done(); });
+    it("returns a resolved promise", function () {
+      return expect(this.result).to.have.been.fulfilled;
     });
   });
 
@@ -147,12 +141,8 @@ describe("Store", function () {
       this.result = this.store.getAllMetadata(this.options);
     });
 
-    it("returns all metadata from the meta store", function (done) {
-      var spec = this;
-      this.result.then(function (meta) {
-        expect(meta).to.eql(spec.allMeta);
-        done();
-      });
+    it("returns all metadata from the meta store", function () {
+      return expect(this.result).to.eventually.eql(this.allMeta);
     });
   });
 });
