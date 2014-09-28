@@ -60,4 +60,19 @@ describe("MetaStore", function () {
         .and.calledWith(this.metaStore.key, JSON.stringify({}));
     });
   });
+
+  describe("invalidateAll", function () {
+    beforeEach(function () {
+      this.result = this.metaStore.invalidateAll();
+    });
+
+    it("removes the metadata", function () {
+      expect(this.metaStore.backend.removeItem).to.have.been.calledOnce
+        .and.calledWith(this.metaStore.key);
+    });
+
+    it("returns a resolved promise", function () {
+      return expect(this.result).to.be.fulfilled;
+    });
+  });
 });

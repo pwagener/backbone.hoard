@@ -133,6 +133,27 @@ describe("Store", function () {
     });
   });
 
+  describe("invalidateAll", function () {
+    beforeEach(function () {
+      var metaDataPromise = Hoard.Promise.resolve({ key1: 'true', key2: 'true' });
+      this.sinon.stub(this.store.metaStore, 'getAll').returns(metaDataPromise);
+      this.sinon.stub(this.store.metaStore, 'invalidateAll').returns(Hoard.Promise.resolve());
+      this.result = this.store.invalidateAll();
+    });
+
+    it("removes each item present in the metadata", function (done) {
+      this.result.then(function () {
+        expect(this.store.backend.removeItem).to.have.been.calledWith('key1')
+          .and.calledWith('key2');
+        done();
+      }.bind(this));
+    });
+
+    it("invalidates all metadata", function () {
+      expect(this.store.metaStore.invalidateAll).to.have.been.calledOnce;
+    });
+  });
+
   describe("getAllMetadata", function () {
     beforeEach(function () {
       this.allMeta = { allMeta: true };

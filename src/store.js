@@ -33,8 +33,19 @@ _.extend(Store.prototype, Hoard.Events, {
 
   invalidate: function (key, options) {
     this.backend.removeItem(key);
-    this.metaStore.invalidate(key, options);
-    return Hoard.Promise.resolve();
+    return this.metaStore.invalidate(key, options);
+  },
+
+  invalidateAll: function () {
+    var dataPromise = this.getAllMetadata().then(function (metadata) {
+      _.each(_.keys(metadata), function (key) {
+        this.backend.removeItem(key);
+      }, this);
+    }.bind(this));
+
+    var metaPromise = this.metaStore.invalidateAll();
+
+    return Hoard.Promise.all([dataPromise, metaPromise]);
   },
 
   getAllMetadata: function (options) {

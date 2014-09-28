@@ -35,6 +35,11 @@ _.extend(MetaStore.prototype, Hoard.Events, {
     return Hoard.Promise.resolve();
   },
 
+  invalidateAll: function () {
+    this.backend.removeItem(this.key);
+    return Hoard.Promise.resolve();
+  },
+
   _get: function () {
     return JSON.parse(this.backend.getItem(this.key)) || {};
   },
