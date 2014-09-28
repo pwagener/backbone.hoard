@@ -39,8 +39,7 @@ var wrapErrorWithInvalidate = function (context, method, model, options) {
 
 var cacheSuccess = function (context, method, model, options) {
   options.success = wrapSuccessWithCache(context, method, model, options);
-  var r = model.sync(method, model, options);
-  return r;
+  return model.sync(method, model, options);
 };
 
 module.exports = {
