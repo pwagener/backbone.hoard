@@ -53,7 +53,7 @@ _.extend(Store.prototype, Hoard.Events, {
   },
 
   onSetError: function (key, options) {
-    return this.invalidate(key, options).then(function () {
+    return this.invalidateAll().then(function () {
       return Hoard.Promise.reject();
     });
   },

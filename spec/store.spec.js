@@ -47,47 +47,49 @@ describe("Store", function () {
       });
     });
 
-    describe("when it fails to store the item", function () {
+    describe("when it fails", function () {
       beforeEach(function () {
-        this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
-        this.store.metaStore.set.returns(Hoard.Promise.resolve());
-        this.store.backend.setItem.withArgs(this.key, this.stringValue).throws();
-        this.result = this.store.set(this.key, this.value, this.meta, this.options);
+        this.sinon.stub(this.store.metaStore, 'getAll').returns(Hoard.Promise.resolve());
+        this.sinon.spy(this.store, 'invalidateAll');
       });
 
-      it("invalidates the key", function (done) {
-        var spec = this;
-        this.result.catch(function () {
-          expect(spec.store.invalidate).to.have.been.calledOnce
-            .and.calledWith(spec.key, spec.options);
-          done();
+      describe("while storing the item", function () {
+        beforeEach(function () {
+          this.store.metaStore.set.returns(Hoard.Promise.resolve());
+          this.store.backend.setItem.withArgs(this.key, this.stringValue).throws();
+          this.result = this.store.set(this.key, this.value, this.meta, this.options);
+        });
+
+        it("[SUBJECT TO CHANGE] clears the cache", function () {
+          return this.result.catch(function () {
+            expect(this.store.invalidateAll).to.have.been.calledOnce;
+          }.bind(this));
+        });
+
+        it("returns a rejected promise", function () {
+          return expect(this.result).to.have.been.rejected;
         });
       });
 
-      it("returns a rejected promise", function () {
-        return expect(this.result).to.have.been.rejected;
+      describe("while storing the metadata", function () {
+        beforeEach(function () {
+          this.store.metaStore.set.returns(Hoard.Promise.reject());
+          this.result = this.store.set(this.key, this.value, this.meta, this.options);
+        });
+
+        it("[SUBJECT TO CHANGE] clears the cache", function () {
+          return this.result.catch(function () {
+            expect(this.store.invalidateAll).to.have.been.calledOnce;
+          }.bind(this));
+        });
+
+        it("returns a rejected promise", function () {
+          return expect(this.result).to.have.been.rejected;
+        });
       });
     });
   });
 
-  describe("when the meta store fails to store the metadata", function () {
-    beforeEach(function () {
-      this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
-      this.store.metaStore.set.returns(Hoard.Promise.reject());
-      this.result = this.store.set(this.key, this.value, this.meta, this.options);
-    });
-
-    it("invalidates the key", function () {
-      return this.result.catch(function () {
-        expect(this.store.invalidate).to.have.been.calledOnce
-          .and.calledWith(this.key, this.options);
-      }.bind(this));
-    });
-
-    it("returns a rejected promise", function () {
-      return expect(this.result).to.have.been.rejected;
-    });
-  });
 
   describe("get", function () {
     describe("when it succeeds", function () {
@@ -107,7 +109,7 @@ describe("Store", function () {
         this.result = this.store.get(this.key);
       });
 
-      it("rejects the returnd promise", function () {
+      it("returns a rejected promise", function () {
         return expect(this.result).to.have.been.rejected;
       });
     });
@@ -141,11 +143,10 @@ describe("Store", function () {
       this.result = this.store.invalidateAll();
     });
 
-    it("removes each item present in the metadata", function (done) {
-      this.result.then(function () {
+    it("removes each item present in the metadata", function () {
+      return this.result.then(function () {
         expect(this.store.backend.removeItem).to.have.been.calledWith('key1')
           .and.calledWith('key2');
-        done();
       }.bind(this));
     });
 
