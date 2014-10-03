@@ -3,15 +3,9 @@
 var _ = require('underscore');
 var Backbone = require('backbone');
 
-var mergeOptions = ['Promise', 'backend'];
-
 module.exports = {
-  initialize: function (options) {
-    _.extend(this, _.pick(options, mergeOptions));
-    if (!this.Promise) {
-      throw new TypeError("An ES6-compliant Promise implementaion must be provided");
-    }
-    return this;
+  Promise: function () {
+    throw new TypeError("An ES6-compliant Promise implementationi must be provided");
   },
 
   Events: Backbone.Events,

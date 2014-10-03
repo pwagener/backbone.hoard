@@ -5,7 +5,8 @@ var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 var chaiAsPromised = require('chai-as-promised');
 var Backbone = require('backbone');
-var Hoard = require('./support/backbone.hoard');
+var Hoard = require('src/backbone.hoard');
+var Promise = require('es6-promise').Promise;
 
 global.expect = chai.expect;
 chai.use(sinonChai);
@@ -33,6 +34,7 @@ var stubAjax = function (spec) {
 
 beforeEach(function () {
   this.sinon = sinon.sandbox.create();
+  Hoard.Promise = Promise;
   stubAjax(this);
 });
 
