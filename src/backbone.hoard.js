@@ -8,6 +8,8 @@ module.exports = {
     throw new TypeError("An ES6-compliant Promise implementationi must be provided");
   },
 
+  sync: Backbone.sync,
+
   Events: Backbone.Events,
 
   extend: Backbone.Model.extend,

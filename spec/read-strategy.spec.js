@@ -17,7 +17,6 @@ describe("Read Strategy", function () {
 
     this.Model = Backbone.Model.extend({ url: this.key });
     this.model = new this.Model();
-    this.sinon.spy(this.model, 'sync');
 
     this.options = {
       success: this.sinon.stub(),
@@ -32,6 +31,8 @@ describe("Read Strategy", function () {
 
   describe("on a cache miss", function () {
     beforeEach(function () {
+      this.clock = this.sinon.useFakeTimers(0);
+
       this.cacheResponse = Hoard.Promise.reject();
       this.sinon.stub(this.store, 'get').returns(this.cacheResponse);
 
@@ -46,22 +47,25 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
+    afterEach(function () {
+      this.clock.restore();
+    });
+
     it("returns a promise that resolves when the get and sync resolve", function () {
       this.ajax.resolve(this.serverResponse);
       return expect(this.execution).to.have.been.fulfilled;
     });
 
-    it("writes a placeholder until the sync resolves", function () {
-      return this.setPromise.then(function () {
-        expect(this.store.set).to.have.been.calledOnce
-          .and.calledWith(this.key, { placeholder: true });
+    it("writes a placeholder", function () {
+      return this.cacheResponse.catch(function () {
+        expect(this.strategy.placeholders[this.key]).to.eql({ expires: 8000 });
       }.bind(this));
     });
 
     it("writes to the cache on a successful sync", function (done) {
       this.ajax.resolve(this.serverResponse);
       this.strategy.on(Helpers.getSyncSuccessEvent(this.key), function () {
-        expect(this.store.set).to.have.been.calledTwice
+        expect(this.store.set).to.have.been.calledOnce
           .and.calledWith(this.key, this.serverResponse, this.metadata);
         done();
       }.bind(this));
@@ -109,14 +113,15 @@ describe("Read Strategy", function () {
 
   describe("on a placeholder cache hit", function () {
     beforeEach(function () {
-      this.getPromise = Hoard.Promise.resolve({ placeholder: true });
+      this.strategy.placeholders[this.key] = { expires: +Infinity };
+      this.getPromise = Hoard.Promise.reject();
       this.sinon.stub(this.store, 'get').returns(this.getPromise);
       this.serverResponse = { myResponse: true };
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
     it("calls options.success on a successful cache event", function () {
-      this.getPromise.then(function () {
+      this.getPromise.catch(function () {
         this.strategy.trigger(Helpers.getSyncSuccessEvent(this.key), this.serverResponse);
       }.bind(this));
       return this.execution.then(function () {
@@ -126,7 +131,7 @@ describe("Read Strategy", function () {
     });
 
     it("calls options.error on an error cache event", function () {
-      this.getPromise.then(function () {
+      this.getPromise.catch(function () {
         this.strategy.trigger(Helpers.getSyncErrorEvent(this.key), this.serverResponse);
       }.bind(this));
       return this.execution.then(undefined, function () {
@@ -138,7 +143,7 @@ describe("Read Strategy", function () {
 
   describe("on a cache hit", function () {
     beforeEach(function () {
-      this.cacheItem = { data: {} };
+      this.cacheItem = { };
       this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.cacheItem));
       this.sinon.stub(this.policy, 'shouldEvictItem').returns(false);
       this.execution = this.strategy.execute(this.model, this.options);
@@ -147,7 +152,7 @@ describe("Read Strategy", function () {
     it("calls options.success with the retreived item", function () {
       return this.execution.then(function () {
         expect(this.options.success).to.have.been.calledOnce
-          .and.calledWith(this.cacheItem.data);
+          .and.calledWith(this.cacheItem);
       }.bind(this));
     });
   });

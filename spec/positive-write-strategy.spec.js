@@ -24,7 +24,7 @@ describe("Positive write strategies", function () {
 
     this.Model = Backbone.Model.extend({ url: this.key });
     this.model = new this.Model();
-    this.sinon.spy(this.model, 'sync');
+    this.sinon.spy(Hoard, 'sync');
 
     this.options = {
       success: this.sinon.stub(),
@@ -46,7 +46,7 @@ describe("Positive write strategies", function () {
     });
 
     it("always calls the underlying model's sync with the same arguments", function () {
-      expect(this.model.sync).to.have.been.calledOnce
+      expect(Hoard.sync).to.have.been.calledOnce
         .and.calledWith('create', this.model, this.options);
     });
 
@@ -73,7 +73,7 @@ describe("Positive write strategies", function () {
     });
 
     it("always calls the underlying model's sync with the same arguments", function () {
-      expect(this.model.sync).to.have.been.calledOnce
+      expect(Hoard.sync).to.have.been.calledOnce
         .and.calledWith('update', this.model, this.options);
     });
 
@@ -100,7 +100,7 @@ describe("Positive write strategies", function () {
     });
 
     it("always calls the underlying model's sync with the same arguments", function () {
-      expect(this.model.sync).to.have.been.calledOnce
+      expect(Hoard.sync).to.have.been.calledOnce
         .and.calledWith('patch', this.model, this.options);
     });
 

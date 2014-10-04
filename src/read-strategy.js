@@ -5,17 +5,23 @@ var Hoard = require('./backbone.hoard');
 var Strategy = require('./strategy');
 var StrategyHelpers = require('./strategy-helpers');
 
-var promiseWrapResponse = function (method, promise) {
-  return function (response) {
-    return promise.then(function () {
-      return method(response);
-    });
+var placeholderInvalidateWrap = function (key, fn) {
+  return function () {
+    delete this.placeholders[key];
+    fn();
   };
 };
 
 var Read = Strategy.extend({
+  initialize: function (options) {
+    this.placeholders = {};
+  },
+
+  placeholderTimeToLive: 8 * 1000,
+
   execute: function (model, options) {
     var key = this.policy.getKey(model, 'read');
+
     return this.store.get(key).then(
       _.bind(this.onCacheHit, this, key, model, options),
       _.bind(this.onCacheMiss, this, key, model, options)
@@ -23,24 +29,38 @@ var Read = Strategy.extend({
   },
 
   onCacheHit: function (key, model, options, cachedItem) {
-      if (this.policy.shouldEvictItem(cachedItem)) {
-        return this.store.invalidate(key).then(_.bind(function () {
-            return this.onCacheMiss(key, model, options);
-          }, this));
-      } else if (cachedItem.placeholder) {
-        return this._onPlaceholderHit(key, options);
-      } else {
-        return this._onFullCacheHit(cachedItem, options);
-      }
+    if (this.policy.shouldEvictItem(cachedItem)) {
+      return this.store.invalidate(key).then(_.bind(function () {
+          return this.onCacheMiss(key, model, options);
+        }, this));
+    } else {
+      return this._onFullCacheHit(cachedItem, options);
+    }
   },
 
   onCacheMiss: function (key, model, options) {
-    var setPromise = this.store.set(key, { placeholder: true });
-    var success = this._wrapSuccessWithCache('read', model, options);
-    var error = this._wrapErrorWithInvalidate('read', model, options);
-    options.success = promiseWrapResponse(success, setPromise);
-    options.error = promiseWrapResponse(error, setPromise);
-    return model.sync('read', model, options);
+    if (this.placeholders[key]) {
+      if (Date.now() > this.placeholders[key].expires) {
+        delete this.placeholders[key];
+      } else {
+        return this._onPlaceholderHit(key, options);
+      }
+    }
+
+    var onSuccess = this._wrapSuccessWithCache('read', model, options);
+    options.success = _.bind(function () {
+      delete this.placeholders[key];
+      onSuccess.apply(null, arguments);
+    }, this);
+
+    var onError = this._wrapErrorWithInvalidate('read', model, options);
+    options.error = _.bind(function () {
+      delete this.placeholders[key];
+      onError.apply(null, arguments);
+    }, this);
+
+    this.placeholders[key] = { expires: Date.now() + this.placeholderTimeToLive };
+    return Hoard.sync('read', model, options);
   },
 
   _onPlaceholderHit: function (key, options) {
@@ -70,7 +90,7 @@ var Read = Strategy.extend({
   },
 
   _onFullCacheHit: function (item, options) {
-      var itemData = item.data;
+      var itemData = item;
       if (options.success) {
         options.success(itemData);
       }

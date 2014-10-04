@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
+var Hoard = require('./backbone.hoard');
 
 var getSyncSuccessEvent = function (key) {
   return 'sync:success:' + key;
@@ -39,7 +40,7 @@ var wrapErrorWithInvalidate = function (context, method, model, options) {
 
 var cacheSuccess = function (context, method, model, options) {
   options.success = wrapSuccessWithCache(context, method, model, options);
-  return model.sync(method, model, options);
+  return Hoard.sync(method, model, options);
 };
 
 module.exports = {
