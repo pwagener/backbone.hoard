@@ -18,21 +18,21 @@ var storeResponse = function (context, key, response, options) {
 };
 
 var wrapSuccessWithCache = function (context, method, model, options) {
+  var key = context.policy.getKey(model, method);
   return _.wrap(options.success, function (onSuccess, response) {
     if (onSuccess) {
       onSuccess(response);
     }
-    var key = context.policy.getKey(model, method);
     storeResponse(context, key, response, options);
   });
 };
 
 var wrapErrorWithInvalidate = function (context, method, model, options) {
+  var key = context.policy.getKey(model, method);
   return _.wrap(options.error, function (onError, response) {
     if (onError) {
       onError(response);
     }
-    var key = context.policy.getKey(model, method);
     context.store.invalidate(key);
     context.trigger(getSyncErrorEvent(key));
   });

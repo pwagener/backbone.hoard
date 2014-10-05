@@ -1,9 +1,5 @@
 'use strict';
 
 var gulp = require('gulp');
-var mocha = require('gulp-mocha');
 
-gulp.task('test', ['link'], function () {
-  return gulp.src(['./spec/setup.js', './spec/**/*.spec.js'], { read: false })
-    .pipe(mocha({ reporter: 'spec' }));
-});
+gulp.task('test', ['test:integration']);
