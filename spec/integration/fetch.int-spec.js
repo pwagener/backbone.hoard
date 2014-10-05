@@ -22,7 +22,12 @@ describe("Fetching", function () {
       this.requests[xhr.url] = urlRequests;
       var value = +xhr.url.match(this.endpoint)[1];
       var newValue = value + 1;
-      xhr.respond(200, { 'Content-Type': 'application/json' }, JSON.stringify({ value: newValue }));
+
+      if (isNaN(newValue)) {
+        xhr.respond(400, { 'Content-Type': 'application/json' }, JSON.stringify({ value: 'Feed me numbers' }));
+      } else {
+        xhr.respond(200, { 'Content-Type': 'application/json' }, JSON.stringify({ value: newValue }));
+      }
     }.bind(this));
   });
 
@@ -46,6 +51,18 @@ describe("Fetching", function () {
 
       it("only calls the server once", function () {
         expect(this.requests['/value-plus-one/1']).to.have.length(1);
+      });
+
+      it("doesn't call the server again on subsequent calls", function () {
+        var m3 = new this.Model({ value: 1 });
+        return m3.fetch().then(function () {
+          expect(m3.get('value')).to.equal(2);
+          expect(this.requests['/value-plus-one/1']).to.have.length(1);
+        }.bind(this));
+      });
+
+      it("populates the cache", function () {
+        expect(localStorage.getItem('/value-plus-one/1')).to.equal(JSON.stringify({ value: 2 }));
       });
     });
 
@@ -77,6 +94,44 @@ describe("Fetching", function () {
       it("only calls the server once", function () {
         expect(this.requests['/value-plus-one/1']).to.have.length(1);
       });
+    });
+  });
+
+  describe("when the request fails", function () {
+    beforeEach(function () {
+      this.notANumber = 'not-a-number';
+      this.m1 = new this.Model({ value: this.notANumber });
+      this.m2 = new this.Model({ value: this.notANumber });
+      return this.m1.fetch().catch(function () {
+        return this.m2.fetch();
+      }.bind(this)).catch(function () {});
+    });
+
+    it("does not populate the models", function () {
+      expect(this.m1.get('value')).to.equal(this.notANumber);
+      expect(this.m2.get('value')).to.equal(this.notANumber);
+    });
+
+    it("makes multiple calls to the server", function () {
+      expect(this.requests['/value-plus-one/not-a-number']).to.have.length(2);
+    });
+  });
+
+  describe("when the cached value has expired", function () {
+    beforeEach(function () {
+      this.key = '/value-plus-one/1';
+      this.control.store.set(this.key, { value: 'super-value' });
+      this.control.store.metaStore.set(this.key, { expires: Date.now() - 1000 });
+      this.m1 = new this.Model({ value: 1 });
+      return this.m1.fetch();
+    });
+
+    it("sets it's value to the server response", function () {
+      expect(this.m1.get('value')).to.equal(2);
+    });
+
+    it("sets the cache to the new value", function () {
+      return expect(this.control.store.get(this.key)).to.eventually.eql({ value: 2 });
     });
   });
 });

@@ -24,6 +24,12 @@ _.extend(MetaStore.prototype, Hoard.Events, {
     return this._set(this.key, allMetadata);
   },
 
+  get: function (key, options) {
+    var allMetadata = this._get();
+    var meta = allMetadata[key] || {};
+    return Hoard.Promise.resolve(meta);
+  },
+
   getAll: function (options) {
     return Hoard.Promise.resolve(this._get());
   },

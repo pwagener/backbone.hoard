@@ -48,6 +48,10 @@ _.extend(Store.prototype, Hoard.Events, {
     return Hoard.Promise.all([dataPromise, metaPromise]);
   },
 
+  getMetadata: function (key, options) {
+    return this.metaStore.get(key, options);
+  },
+
   getAllMetadata: function (options) {
     return this.metaStore.getAll(options);
   },

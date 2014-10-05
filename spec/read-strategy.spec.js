@@ -85,29 +85,21 @@ describe("Read Strategy", function () {
     beforeEach(function () {
       this.getPromise = Hoard.Promise.resolve();
       this.sinon.stub(this.store, 'get').returns(this.getPromise);
+      this.sinon.stub(this.store, 'getMetadata').returns(Hoard.Promise.resolve());
+      this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
       this.sinon.stub(this.policy, 'shouldEvictItem').returns(true);
-      this.invalidated = Hoard.Promise.resolve();
-      this.sinon.stub(this.store, 'invalidate').returns(this.invalidated);
-      var cacheMissed = this.cacheMissed = Hoard.defer();
-      this.sinon.stub(this.strategy, 'onCacheMiss', function () {
-        cacheMissed.resolve();
-        return cacheMissed.promise;
-      });
-      this.execution = this.strategy.execute(this.model, this.options);
+      this.sinon.stub(this.strategy, 'onCacheMiss').returns(Hoard.Promise.resolve());
+      return this.execution = this.strategy.execute(this.model, this.options);
     });
 
     it("invalidates the cache", function () {
-      return this.getPromise.then(function () {
-        expect(this.store.invalidate).to.have.been.calledOnce
-          .and.calledWith(this.key);
-      }.bind(this));
+      expect(this.store.invalidate).to.have.been.calledOnce
+        .and.calledWith(this.key);
     });
 
     it("acts as a cache miss", function () {
-      return this.cacheMissed.promise.then(function () {
-        expect(this.strategy.onCacheMiss).to.have.been.calledOnce
-          .and.calledWith(this.key, this.model, this.options);
-      }.bind(this));
+      expect(this.strategy.onCacheMiss).to.have.been.calledOnce
+        .and.calledWith(this.key, this.model, this.options);
     });
   });
 
@@ -145,6 +137,7 @@ describe("Read Strategy", function () {
     beforeEach(function () {
       this.cacheItem = { };
       this.sinon.stub(this.store, 'get').returns(Hoard.Promise.resolve(this.cacheItem));
+      this.sinon.stub(this.store, 'getMetadata').returns(Hoard.Promise.resolve());
       this.sinon.stub(this.policy, 'shouldEvictItem').returns(false);
       this.execution = this.strategy.execute(this.model, this.options);
     });

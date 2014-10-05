@@ -35,8 +35,7 @@ _.extend(Policy.prototype, Hoard.Events, {
     return meta;
   },
 
-  shouldEvictItem: function (cacheItem) {
-    var meta = cacheItem.meta || {};
+  shouldEvictItem: function (meta) {
     return meta.expires != null && meta.expires < Date.now();
   }
 });

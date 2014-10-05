@@ -29,13 +29,15 @@ var Read = Strategy.extend({
   },
 
   onCacheHit: function (key, model, options, cachedItem) {
-    if (this.policy.shouldEvictItem(cachedItem)) {
-      return this.store.invalidate(key).then(_.bind(function () {
+    return this.store.getMetadata(key, options).then(_.bind(function (meta) {
+      if (this.policy.shouldEvictItem(meta)) {
+        return this.store.invalidate(key).then(_.bind(function () {
           return this.onCacheMiss(key, model, options);
         }, this));
-    } else {
-      return this._onFullCacheHit(cachedItem, options);
-    }
+      } else {
+        return this._onFullCacheHit(cachedItem, options);
+      }
+    }, this));
   },
 
   onCacheMiss: function (key, model, options) {

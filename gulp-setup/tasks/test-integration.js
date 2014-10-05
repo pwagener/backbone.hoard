@@ -6,6 +6,6 @@ var karma = require('karma').server;
 gulp.task('test:integration', ['test:unit', 'test:integration:bundle'], function (done) {
   karma.start({
     configFile: process.env.PWD + '/karma.conf.js',
-    singleRun: true
+    singleRun: +process.env.KARMA_DEBUG === 1 ? false : true
   }, done);
 });
