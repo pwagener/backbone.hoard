@@ -29,8 +29,9 @@ Promise.all(fetches).then(function () {
 ```
 
 #Requirements
+
  - Backbone >= 1.0.0 
- - underscore >= 1.4.0
+ - underscore >= 1.4.4
  - `localStorage`
  - An es6-compliant `Promise`
  
@@ -122,14 +123,7 @@ Hoard uses reasonable defaults for it's external dependencies, but they can be c
 ##Hoard.Promise
 
 Hoard will use the native Promise (`window.Promise`) implementation, if it exists. 
-If no Promise implementation is provided, Hoard will wrap jQuery.Deferred, but it is recommended to use a fully 
-[Promises/A+](https://promisesaplus.com/) compliant implementation.
-Optionally, Hoard can be configured with any Promise implementation providing es6-compliant implementations of:
-
- - `new Promise(resolve, reject)`
- - `Promise.resolve(r)`
- - `Promise.reject(r)`
- - `Promise.all([promises...])`
+Otherwise, you will need to configure Hoard with an es6-compliant Promise implementation.
  
 ##Hoard.backend
 

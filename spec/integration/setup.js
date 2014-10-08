@@ -7,8 +7,7 @@ var chai = require('chai');
 var sinonChai = require('sinon-chai');
 var chaiAsPromised = require('chai-as-promised');
 var Backbone = require('backbone');
-Backbone.$ = require('jquery');
-var Hoard = require('src/bundle/backbone.hoard.bundle');
+var Hoard = require('src/build/backbone.hoard.bundle');
 
 // load specs
 require('./fetch.int-spec');

@@ -1,11 +1,10 @@
 'use strict';
 
-var _ = require('underscore');
 var Backbone = require('backbone');
 
 module.exports = {
   Promise: function () {
-    throw new TypeError("An ES6-compliant Promise implementationi must be provided");
+    throw new TypeError('An ES6-compliant Promise implementation must be provided');
   },
 
   sync: Backbone.sync,

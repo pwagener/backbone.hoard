@@ -9,22 +9,21 @@
   "author": "Christian Maher",
   "license": "MIT",
   "devDependencies": {
-    "browserify": "^6.0.2",
     "chai": "^1.9.1",
     "chai-as-promised": "^4.1.1",
+    "del": "^0.1.3",
     "es6-promise": "^1.0.0",
     "exec-sync": "^0.1.6",
     "gulp": "^3.8.8",
     "gulp-mocha": "^1.0.0",
-    "gulp-rimraf": "^0.1.1",
-    "jquery": "^2.1.1",
+    "gulp-rename": "^1.2.0",
+    "gulp-webpack": "^0.4.1",
     "karma": "^0.12.24",
     "karma-chrome-launcher": "^0.1.5",
     "karma-mocha": "^0.1.9",
     "mocha": "^1.21.4",
     "sinon": "^1.10.3",
-    "sinon-chai": "^2.5.0",
-    "vinyl-source-stream": "^1.0.0"
+    "sinon-chai": "^2.5.0"
   },
   "dependencies": {
     "backbone": "1.0.0 - 1.1.2",
