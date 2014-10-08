@@ -18,6 +18,7 @@
     "gulp-mocha": "^1.0.0",
     "gulp-rename": "^1.2.0",
     "gulp-webpack": "^0.4.1",
+    "jquery": "^2.1.1",
     "karma": "^0.12.24",
     "karma-chrome-launcher": "^0.1.5",
     "karma-mocha": "^0.1.9",
