@@ -1,11 +1,18 @@
 {
   "name": "backbone.hoard",
+  "repository": "https://github.com/cmaher/backbone.hoard",
   "version": "0.0.0",
   "description": "Local caching for Backbone",
-  "main": "gulpfile.js",
+  "main": "dist/backbone.hoard.js",
   "scripts": {
     "test": "gulp test"
   },
+  "keywords": [
+    "backbone",
+    "cache",
+    "localstorage",
+    "sync"
+  ],
   "author": "Christian Maher",
   "license": "MIT",
   "devDependencies": {

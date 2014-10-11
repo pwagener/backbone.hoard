@@ -6,7 +6,7 @@ var Hoard = require('./backbone.hoard');
 var mergeOptions = ['expires', 'timeToLive'];
 
 var Policy = function (options) {
-  _.extend(this, _.pick(options, mergeOptions));
+  _.extend(this, _.pick(options || {}, mergeOptions));
   this.initialize.apply(this, arguments);
 };
 
