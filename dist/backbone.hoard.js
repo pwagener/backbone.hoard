@@ -97,7 +97,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = {
 	  Promise: function () {
-	    throw new TypeError("An ES6-compliant Promise implementationi must be provided");
+	    throw new TypeError('An ES6-compliant Promise implementation must be provided');
 	  },
 
 	  sync: Backbone.sync,
@@ -205,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var mergeOptions = ['expires', 'timeToLive'];
 
 	var Policy = function (options) {
-	  _.extend(this, _.pick(options, mergeOptions));
+	  _.extend(this, _.pick(options || {}, mergeOptions));
 	  this.initialize.apply(this, arguments);
 	};
 
@@ -220,17 +220,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  getMetadata: function (key, response, options) {
-	    options = options || {};
 	    var meta = {};
-	    var expires = options.expires || this.expires;
-	    var ttl = options.timeToLive || this.timeToLive;
-	    if (ttl != null && expires == null) {
-	      expires = Date.now() + ttl;
+	    var expires = this.expires;
+	    if (this.timeToLive != null && expires == null) {
+	      expires = Date.now() + this.timeToLive;
 	    }
 	    if (expires != null) {
 	      meta.expires = expires;
 	    }
-
 	    return meta;
 	  },
 
@@ -354,7 +351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var mergeOptions = ['store', 'policy'];
 
 	var Strategy = function (options) {
-	  _.extend(this, _.pick(options, mergeOptions));
+	  _.extend(this, _.pick(options || {}, mergeOptions));
 	  this.initialize.apply(this, arguments);
 	};
 
@@ -479,7 +476,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var PositiveWriteStrategy = __webpack_require__(15);
+	var PositiveWriteStrategy = __webpack_require__(16);
 
 	module.exports = PositiveWriteStrategy.extend({ _method: 'create' });
 
@@ -493,7 +490,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(7);
 	var Hoard = __webpack_require__(2);
 	var Strategy = __webpack_require__(6);
-	var StrategyHelpers = __webpack_require__(16);
+	var StrategyHelpers = __webpack_require__(15);
 
 	var placeholderInvalidateWrap = function (key, fn) {
 	  return function () {
@@ -601,7 +598,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var PositiveWriteStrategy = __webpack_require__(15);
+	var PositiveWriteStrategy = __webpack_require__(16);
 
 	module.exports = PositiveWriteStrategy.extend({ _method: 'update' });
 
@@ -612,7 +609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
-	var PositiveWriteStrategy = __webpack_require__(15);
+	var PositiveWriteStrategy = __webpack_require__(16);
 
 	module.exports = PositiveWriteStrategy.extend({ _method: 'patch' });
 
@@ -638,24 +635,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var Strategy = __webpack_require__(6);
-	var StrategyHelpers = __webpack_require__(16);
-
-	module.exports = Strategy.extend({
-	  execute: function (model, options) {
-	    return this._cacheSuccess(this._method, model, options);
-	  },
-
-	  _cacheSuccess: StrategyHelpers.proxyCacheSuccess
-	});
-
-
-/***/ },
-/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -720,6 +699,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return cacheSuccess(this, method, model, options);
 	  }
 	};
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Strategy = __webpack_require__(6);
+	var StrategyHelpers = __webpack_require__(15);
+
+	module.exports = Strategy.extend({
+	  execute: function (model, options) {
+	    return this._cacheSuccess(this._method, model, options);
+	  },
+
+	  _cacheSuccess: StrategyHelpers.proxyCacheSuccess
+	});
+
 
 /***/ }
 /******/ ])

@@ -1,7 +1,7 @@
 {
   "name": "backbone.hoard",
   "repository": "https://github.com/cmaher/backbone.hoard",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Local caching for Backbone",
   "main": "dist/backbone.hoard.js",
   "scripts": {
