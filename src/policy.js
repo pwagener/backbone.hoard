@@ -21,17 +21,14 @@ _.extend(Policy.prototype, Hoard.Events, {
   },
 
   getMetadata: function (key, response, options) {
-    options = options || {};
     var meta = {};
-    var expires = options.expires || this.expires;
-    var ttl = options.timeToLive || this.timeToLive;
-    if (ttl != null && expires == null) {
-      expires = Date.now() + ttl;
+    var expires = this.expires;
+    if (this.timeToLive != null && expires == null) {
+      expires = Date.now() + this.timeToLive;
     }
     if (expires != null) {
       meta.expires = expires;
     }
-
     return meta;
   },
 

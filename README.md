@@ -3,7 +3,9 @@
 backbone.hoard
 --------------
 
-Configurable caching for Backbone. 
+Configurable caching for Backbone. Hoard is designed to make it easy to avoid 
+extraneous AJAX requests by caching responses and making sure only one request goes out for the same url, 
+all while remaining highly configurable and customizable.
 
 #Example
 ```js
@@ -30,12 +32,15 @@ Promise.all(fetches).then(function () {
 
 #Requirements
 
- - Backbone >= 1.0.0 
- - underscore >= 1.4.4
+ - Backbone 1.0.0 - 1.1.2
+ - underscore 1.4.4 - 1.7.0
  - `localStorage`
  - An es6-compliant `Promise`
  
 #API
+
+The usage demonstrated in the example represents the common use case. 
+That said, Hoard is about configuring caching behavior, and each component is open to customization.
 
 ##Control
 
@@ -54,27 +59,83 @@ Creates a `Control` and overwrites the following default options, if provided
 - deleteStrategyClass: the type of `Strategy` to create and assign to `deleteStrategy`, used when `sync` is called with method `delete`
 - patchStrategyClass: the type of `Strategy` to create and assign to `patchStrategy`, used when `sync` is called with method `patch`
 
+All options provided will be passed down to the constructors of the `store`, `policy`, and all strategies.
+
 ###Control#sync(method, model, options)
 
 Delegates to a strategy determined by `method`. Calls `Strategy#execute` with the provided `model` and `options`.
 
 Returns a `Promise` that resolves if the sync action is successful or rejects if it fails.
 
+By default, Control#sync behaves differently depending on the `method` parameter, as follows:
+
+* `read`
+    * [Cache hit] If the given `model` has data in the cache
+        * If the item is not expired, call options.success with the cached item
+        * If the item is expired, remove the item from the cache, and proceed as a read [Cache Miss]
+    * [Cache Miss] If the given `model` does not have data in the cache
+        * On a success, store the result in the cache
+        * On an error, remove the `model`'s item from the cache
+        * While waiting for the result of the call to `Backbone.sync`, prevent subsequent requests to the same url 
+        from being made. Update all models blocked in this way once the `sync` result is known.
+* `create`, `update`, `patch`
+    * Delegate to `Backbone.sync` and store the response in the cache
+* `delete`
+    * Remove the `model`'s item from the cache
+    * Delegate to `Backbone.sync`
+    
+All interactions with the cache use the given `model`'s `url` property as th key, 
+as resolved at time of the initial sync call
+
+NOTE: If at any time there is not enough space in the cache to store the desired item, Hoard will remove all 
+managed items from the cache and try again. This behavior is temporary and is targeted for improvment in future releases.
+
 ###Control#getModelSync
 
-Returns a method that can be assigned `sync` on a `Backbone.Model` or a `Backbone.Controller`. 
+Returns a method that can be assigned `sync` on a `Backbone.Model` or a `Backbone.Collection`. 
 The returned method has all of the same properties as the control's `sync` method.
 
 ##Policy
 
+The `Policy` determines meta information about cached items
+
 ###Policy#timeToLive
-###Policy#getKey
-###Policy#shouldEvictItem
-###Policy#getMetadata
+
+The amount of time, in milliseconds, that an item should be stored in the cache
+
+###Policy#expires
+
+A timestamp, in milliseconds, indicating the time after which the item should no longer be stored in the cache. 
+If both `timeToLive` and `expires` are present, `expires` takes precedence.
+
+###Policy#getKey(model, method)
+
+Returns an identifier for the given `model` and `method` to reference in the cache.
+Defaults to the result of `model.url`.
+
+###Policy#shouldEvictItem(metadata)
+
+Returns `true` if the item represented by `metadata` is stale, false otherwise.
+
+###Policy#getMetadata(key, response, [options])
+
+Returns an object representing the metadata for the given `key`, `response`, and `options`.
+
+By default, only expiration data is returned, based on the Policy's `timeToLive` or `expires` property. 
+This behavior is agnostic of any arguments provided, which are available for custom implementations.
 
 ##Strategy
 
-###Strategy#execute
+The `Strategy` uses the `Store` and `Policy` to determines how to handle any given call to `sync`. It is responsible for
+determining when to read from the cache or from the server, when to write to the cache, 
+and when to remove items from the cache.
+
+###Strategy#execute(model, options)
+
+Determines how to handle a `sync` for the given `model`. The bulk of caching behavior is handled by various 
+implementations of this method in different subclasses of `Strategy`
+
+Returns a `Promise` that resolves if the sync action is successful or rejects if it fails.
 
 ##Store
 
@@ -88,8 +149,7 @@ This behavior makes it possible to use other types of client-side storage, such 
 Returns a `Promise` that resolves with the cached item associated with the given `key` if it exists, 
 or a rejected `Promise` if the item is not in the cache.
 
-`options` are provided for custom implementations.
-
+`options` are provided for use by custom implementations.
 
 ###Store#set(key, item, meta, [options])
 
@@ -99,7 +159,7 @@ Additionally, store the provided `metadata` containing information that Hoard ne
 Returns a `Promise` that resolves when the given item and metadata are stored
 or rejects if an error occurs when storing either value.
 
-`options` are provided for custom implementations.
+`options` are provided for use by custom implementations.
 
 ###Store#invalidate(key, [options])
 
@@ -107,14 +167,14 @@ Remove the item and metadata associated with the given `key` from the cache.
 
 Returns a `Promise` that resolves when the item is removed from the cache.
 
-`options` are provided for custom implementations.
+`options` are provided for use by custom implementations.
 
 ###Store#getMetadata(key, [options])
 
 Returns a `Promise` that resolves with either the metadata associated with the given `key` 
 or an empty object if no metadata is found.
 
-`options` are provided for custom implementations.
+`options` are provided for use by custom implementations.
 
 #Configuration
 
@@ -134,3 +194,12 @@ If support for older browsers is desired, be sure to use a polyfill.
  - `backend.setItem`
  - `backend.getItem`
  - `backend.removeItem`
+ 
+ ```js
+ // ex: using sessionStorage instead of local storage
+ // Make Stores use sessionStorage unless explicitly told to use something else
+ Hoard.backend = sessionStorage;
+ 
+ // Make all instantces of LocalStore use localStorage
+ var LocalStore = Hoard.Store.extend({ backend: localStorage });
+ ```

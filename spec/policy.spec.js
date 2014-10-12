@@ -33,22 +33,10 @@ describe("Policy", function () {
         expect(policy.getMetadata()).to.eql({ expires: 1234 });
       });
 
-      it("overrides the expires property with the options", function () {
-        var policy = new Policy({ expires: 1234 });
-        var meta = policy.getMetadata('key', 'response', { expires: 1 });
-        expect(meta).to.eql({ expires: 1 });
-      });
-
       it("uses the timeToLive property to calculate expires", function () {
         var policy = new Policy({ timeToLive: 10 });
         var meta = policy.getMetadata();
         expect(meta).to.eql({ expires: 15 });
-      });
-
-      it("overrides the expires property with the options", function () {
-        var policy = new Policy({ timeToLive: 10 });
-        var meta = policy.getMetadata('key', 'response', { timeToLive: 5});
-        expect(meta).to.eql({ expires: 10 });
       });
 
       it("prefers expires to timeToLive", function () {
