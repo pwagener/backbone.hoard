@@ -17,46 +17,49 @@ var storeResponse = function (context, key, response, options) {
   context.trigger(getSyncSuccessEvent(key), response);
 };
 
-var wrapSuccessWithCache = function (context, method, model, options) {
+var invalidateResponse = function (context, key, response, options) {
+  context.store.invalidate(key);
+  context.trigger(getSyncErrorEvent(key));
+};
+
+var wrapMethod = function (context, method, model, options) {
   var key = context.policy.getKey(model, method);
-  return _.wrap(options.success, function (onSuccess, response) {
-    if (onSuccess) {
-      onSuccess(response);
+  return _.wrap(options[options.targetMethod], function (targetMethod, response) {
+    if (targetMethod) {
+      targetMethod(response);
     }
-    storeResponse(context, key, response, options);
+    if (options.generateKeyFromResponse) {
+      key = context.policy.getKey(model, method);
+    }
+    if (options.responseHandler) {
+      options.responseHandler(context, key, response, options);
+    }
   });
 };
 
-var wrapErrorWithInvalidate = function (context, method, model, options) {
-  var key = context.policy.getKey(model, method);
-  return _.wrap(options.error, function (onError, response) {
-    if (onError) {
-      onError(response);
-    }
-    context.store.invalidate(key);
-    context.trigger(getSyncErrorEvent(key));
-  });
-};
-
-var cacheSuccess = function (context, method, model, options) {
-  options.success = wrapSuccessWithCache(context, method, model, options);
-  return Hoard.sync(method, model, options);
-};
-
-module.exports = {
+var helpers = {
   getSyncSuccessEvent: getSyncSuccessEvent,
 
   getSyncErrorEvent: getSyncErrorEvent,
 
   proxyWrapSuccessWithCache: function (method, model, options) {
-    return wrapSuccessWithCache(this, method, model, options);
+    return wrapMethod(this, method, model, _.extend({
+      targetMethod: 'success',
+      responseHandler: storeResponse
+    }, options));
   },
 
   proxyWrapErrorWithInvalidate: function (method, model, options) {
-    return wrapErrorWithInvalidate(this, method, model, options);
+    return wrapMethod(this, method, model, _.extend({
+      targetMethod: 'error',
+      responseHandler: invalidateResponse
+    }, options));
   },
 
   proxyCacheSuccess: function (method, model, options) {
-    return cacheSuccess(this, method, model, options);
+    options.success = helpers.proxyWrapSuccessWithCache(this, method, model, options);
+    return Hoard.sync(method, model, options);
   }
 };
+
+module.exports = helpers;

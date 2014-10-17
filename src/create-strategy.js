@@ -2,4 +2,10 @@
 
 var PositiveWriteStrategy = require('./positive-write-strategy');
 
-module.exports = PositiveWriteStrategy.extend({ _method: 'create' });
+module.exports = PositiveWriteStrategy.extend({
+  _method: 'create',
+
+  cacheOptions: {
+    generateKeyFromResponse: true
+  }
+});
