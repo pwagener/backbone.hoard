@@ -13,7 +13,7 @@ var Store = function (options) {
     backend: Hoard.backend,
     metaStoreClass: MetaStore
   });
-  this.metaStore = new this.metaStoreClass(mergeOptions);
+  this.metaStore = new this.metaStoreClass(options);
   this.initialize.apply(this, arguments);
 };
 

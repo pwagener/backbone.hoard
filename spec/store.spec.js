@@ -3,6 +3,7 @@
 var _ = require('underscore');
 var Hoard = require('src/backbone.hoard');
 var Store = require('src/store');
+var MetaStore = require('src/meta-store');
 
 describe("Store", function () {
   beforeEach(function () {
@@ -12,7 +13,9 @@ describe("Store", function () {
       removeItem: this.sinon.stub()
     };
 
-    this.store = new Store();
+    this.storeOptions = { myOption: true };
+    this.sinon.spy(MetaStore.prototype, 'initialize')
+    this.store = new Store(this.storeOptions);
     this.sinon.stub(this.store.metaStore, 'set');
     this.sinon.stub(this.store.metaStore, 'invalidate').returns(Hoard.Promise.resolve());
 
@@ -21,6 +24,11 @@ describe("Store", function () {
     this.meta = { myMeta: true };
     this.options = {};
     this.stringValue = JSON.stringify(this.value);
+  });
+
+  it("creates a metaStore with the provided options", function () {
+    expect(this.store.metaStore.initialize).to.have.been.calledOnce
+      .and.calledWith(this.storeOptions);
   });
 
   describe("set", function () {
