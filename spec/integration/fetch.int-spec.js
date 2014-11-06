@@ -92,6 +92,25 @@ describe("Fetching", function () {
         expect(this.requests['GET:/value-plus-one/1']).to.have.length(1);
       });
     });
+
+    describe("with a warmed cache", function () {
+      beforeEach(function () {
+        return this.control.store.set(this.m1.url(), { value: 2 }).then(function () {
+          this.m1Promise = this.m1.fetch();
+          this.m2Promise = this.m2.fetch();
+          return Promise.all([this.m1Promise, this.m2Promise]);
+        }.bind(this));
+      });
+
+      it("populates the models with the response", function () {
+        expect(this.m1.get('value')).to.equal(2);
+        expect(this.m2.get('value')).to.equal(2);
+      });
+
+      it("doesn't call the server", function () {
+        expect(this.requests['GET:/value-plus-one/1']).not.to.exist;
+      });
+    });
   });
 
   describe("when the request fails", function () {

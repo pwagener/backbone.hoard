@@ -3,23 +3,23 @@
 var _ = require('underscore');
 var Hoard = require('./backbone.hoard');
 
-var getSyncSuccessEvent = function (key) {
-  return 'sync:success:' + key;
-};
-
-var getSyncErrorEvent = function (key) {
-  return 'sync:error:' + key;
+var getStoreActionResponse = function (options) {
+  return function () {
+    if (options.onStoreActionComplete) {
+      options.onStoreActionComplete();
+    }
+  }
 };
 
 var storeResponse = function (context, key, response, options) {
   var meta = context.policy.getMetadata(key, response, options);
-  context.store.set(key, response, meta);
-  context.trigger(getSyncSuccessEvent(key), response);
+  var onStoreComplete = getStoreActionResponse(options);
+  context.store.set(key, response, meta).then(onStoreComplete, onStoreComplete);
 };
 
 var invalidateResponse = function (context, key, response, options) {
-  context.store.invalidate(key);
-  context.trigger(getSyncErrorEvent(key));
+  var onStoreComplete = getStoreActionResponse(options);
+  context.store.invalidate(key).then(onStoreComplete, onStoreComplete);
 };
 
 var wrapMethod = function (context, method, model, options) {
@@ -38,10 +38,6 @@ var wrapMethod = function (context, method, model, options) {
 };
 
 var helpers = {
-  getSyncSuccessEvent: getSyncSuccessEvent,
-
-  getSyncErrorEvent: getSyncErrorEvent,
-
   proxyWrapSuccessWithCache: function (method, model, options) {
     return wrapMethod(this, method, model, _.extend({
       targetMethod: 'success',

@@ -31,14 +31,12 @@ describe("Read Strategy", function () {
 
   describe("on a cache miss", function () {
     beforeEach(function () {
-      this.clock = this.sinon.useFakeTimers(0);
-
       this.cacheResponse = Hoard.Promise.reject();
       this.sinon.stub(this.store, 'get').returns(this.cacheResponse);
 
       this.setPromise = Hoard.Promise.resolve();
       this.sinon.stub(this.store, 'set').returns(this.setPromise);
-      this.sinon.stub(this.store, 'invalidate');
+      this.sinon.stub(this.store, 'invalidate').returns(Hoard.Promise.resolve());
 
       this.metadata = { myMeta: true};
       this.serverResponse = { myResponse: true };
@@ -47,36 +45,29 @@ describe("Read Strategy", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    afterEach(function () {
-      this.clock.restore();
-    });
-
     it("returns a promise that resolves when the get and sync resolve", function () {
       this.ajax.resolve(this.serverResponse);
       return expect(this.execution).to.have.been.fulfilled;
     });
 
     it("writes a placeholder", function () {
-      return this.cacheResponse.catch(function () {
-        expect(this.strategy.placeholders[this.key]).to.eql({ expires: 8000 });
-      }.bind(this));
+      expect(this.strategy.placeholders[this.key].accesses).to.equal(1);
+      expect(this.strategy.placeholders[this.key].promise).to.be.an.instanceOf(Hoard.Promise);
     });
 
-    it("writes to the cache on a successful sync", function (done) {
+    it("writes to the cache on a successful sync", function () {
       this.ajax.resolve(this.serverResponse);
-      this.strategy.on(Helpers.getSyncSuccessEvent(this.key), function () {
+      return this.execution.then(function () {
         expect(this.store.set).to.have.been.calledOnce
           .and.calledWith(this.key, this.serverResponse, this.metadata);
-        done();
       }.bind(this));
     });
 
-    it("invalidates the cache on a failed sync", function (done) {
+    it("invalidates the cache on a failed sync", function () {
       this.ajax.reject(this.serverResponse);
-      this.strategy.on(Helpers.getSyncErrorEvent(this.key), function () {
+      return this.execution.catch(function () {
         expect(this.store.invalidate).to.have.been.calledOnce
           .and.calledWith(this.key);
-        done();
       }.bind(this));
     });
   });
@@ -105,17 +96,18 @@ describe("Read Strategy", function () {
 
   describe("on a placeholder cache hit", function () {
     beforeEach(function () {
-      this.strategy.placeholders[this.key] = { expires: +Infinity };
+      this.serverDeferred = Hoard.defer();
+      this.strategy.placeholders[this.key] = {
+        accesses: 1,
+        promise: this.serverDeferred.promise
+      };
       this.getPromise = Hoard.Promise.reject();
-      this.sinon.stub(this.store, 'get').returns(this.getPromise);
       this.serverResponse = { myResponse: true };
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("calls options.success on a successful cache event", function () {
-      this.getPromise.catch(function () {
-        this.strategy.trigger(Helpers.getSyncSuccessEvent(this.key), this.serverResponse);
-      }.bind(this));
+    it("calls options.success on a successful cache", function () {
+      this.serverDeferred.resolve(this.serverResponse);
       return this.execution.then(function () {
         expect(this.options.success).to.have.been.calledOnce
           .and.calledWith(this.serverResponse);
@@ -123,9 +115,7 @@ describe("Read Strategy", function () {
     });
 
     it("calls options.error on an error cache event", function () {
-      this.getPromise.catch(function () {
-        this.strategy.trigger(Helpers.getSyncErrorEvent(this.key), this.serverResponse);
-      }.bind(this));
+      this.serverDeferred.reject(this.serverResponse);
       return this.execution.then(undefined, function () {
         expect(this.options.error).to.have.been.calledOnce
           .and.calledWith(this.serverResponse);
@@ -147,6 +137,45 @@ describe("Read Strategy", function () {
         expect(this.options.success).to.have.been.calledOnce
           .and.calledWith(this.cacheItem);
       }.bind(this));
+    });
+  });
+
+  describe("(#15) avoiding race conditions" , function () {
+    describe("on multiple cache misses, with one cache miss completely resolving before the other", function () {
+      beforeEach(function () {
+        this.missDeferreds = [Hoard.defer(), Hoard.defer()];
+        this.sinon.stub(this.store, 'get');
+        this.store.get.onCall(0).returns(this.missDeferreds[0].promise);
+        this.store.get.onCall(1).returns(this.missDeferreds[1].promise);
+        this.models = [new this.Model(), new this.Model()];
+        this.executions = [
+          this.strategy.execute(this.models[0], this.options),
+          this.strategy.execute(this.models[1], this.options)
+        ];
+
+        this.response = { myResponse: true };
+        this.sinon.spy(Hoard, 'sync');
+        this.sinon.stub(this.store, 'set').returns(Hoard.Promise.resolve());
+
+        this.missDeferreds[0].reject();
+        return this.missDeferreds[0].promise.catch(function () {
+          this.ajax.resolve(this.response);
+          return this.executions[0];
+        }.bind(this)).then(function () {
+          this.missDeferreds[1].reject();
+          return this.executions[1];
+        }.bind(this));
+      });
+
+      it("only calls sync once", function () {
+        expect(Hoard.sync).to.have.been.calledOnce
+          .and.calledWith('read', this.models[0], this.options);
+      });
+
+      xit("assigns the proper attributes to the models", function () {
+        expect(this.models[0].toJSON()).to.eql(this.response);
+        expect(this.models[1].toJSON()).to.eql(this.response);
+      });
     });
   });
 });
