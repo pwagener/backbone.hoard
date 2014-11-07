@@ -5,8 +5,8 @@ var Hoard = require('./backbone.hoard');
 
 var getStoreActionResponse = function (options) {
   return function () {
-    if (options.onStoreActionComplete) {
-      options.onStoreActionComplete();
+    if (options.onStoreAction) {
+      options.onStoreAction();
     }
   }
 };
@@ -37,6 +37,7 @@ var wrapMethod = function (context, method, model, options) {
   });
 };
 
+// Convenience methods for strategies
 var helpers = {
   proxyWrapSuccessWithCache: function (method, model, options) {
     return wrapMethod(this, method, model, _.extend({
@@ -50,11 +51,6 @@ var helpers = {
       targetMethod: 'error',
       responseHandler: invalidateResponse
     }, options));
-  },
-
-  proxyCacheSuccess: function (method, model, options) {
-    options.success = helpers.proxyWrapSuccessWithCache(this, method, model, options);
-    return Hoard.sync(method, model, options);
   }
 };
 

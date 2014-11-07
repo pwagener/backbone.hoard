@@ -6,6 +6,9 @@ var StoreHelpers = require('./store-helpers');
 
 var mergeOptions = ['backend', 'key'];
 
+// The meta store stores all metadata about items in a single entry in the backend.
+// A single entry is used so we can easily iterate over managed keys
+// This API should currently be considered private
 var MetaStore = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions));
   _.defaults(this, { backend: Hoard.backend });
