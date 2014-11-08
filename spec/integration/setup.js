@@ -11,6 +11,7 @@ var Hoard = require('src/build/backbone.hoard.bundle');
 
 // load specs
 require('./fetch.int-spec');
+require('./save.int-spec');
 
 window.expect = chai.expect;
 chai.use(sinonChai);
@@ -21,6 +22,15 @@ beforeEach(function () {
   this.server = sinon.fakeServer.create();
   this.server.autoRespond = true;
   this.sinon = sinon.sandbox.create();
+
+  this.requests = {};
+
+  this.storeRequest = function (xhr) {
+    var requestKey = xhr.method + ':' + xhr.url;
+    var urlRequests = this.requests[requestKey] || [];
+    urlRequests.push(xhr);
+    this.requests[requestKey] = urlRequests;
+  };
 });
 
 afterEach(function () {

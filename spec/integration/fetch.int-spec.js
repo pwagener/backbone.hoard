@@ -14,12 +14,9 @@ describe("Fetching", function () {
       sync: this.control.getModelSync()
     });
 
-    this.requests = {};
     this.endpoint = /\/value-plus-one\/(.+)/;
     this.server.respondWith('GET', this.endpoint, function (xhr) {
-      var urlRequests = this.requests[xhr.url] || [];
-      urlRequests.push(xhr);
-      this.requests[xhr.url] = urlRequests;
+      this.storeRequest(xhr);
       var value = +xhr.url.match(this.endpoint)[1];
       var newValue = value + 1;
 
@@ -50,14 +47,14 @@ describe("Fetching", function () {
       });
 
       it("only calls the server once", function () {
-        expect(this.requests['/value-plus-one/1']).to.have.length(1);
+        expect(this.requests['GET:/value-plus-one/1']).to.have.length(1);
       });
 
       it("doesn't call the server again on subsequent calls", function () {
         var m3 = new this.Model({ value: 1 });
         return m3.fetch().then(function () {
           expect(m3.get('value')).to.equal(2);
-          expect(this.requests['/value-plus-one/1']).to.have.length(1);
+          expect(this.requests['GET:/value-plus-one/1']).to.have.length(1);
         }.bind(this));
       });
 
@@ -92,7 +89,26 @@ describe("Fetching", function () {
       });
 
       it("only calls the server once", function () {
-        expect(this.requests['/value-plus-one/1']).to.have.length(1);
+        expect(this.requests['GET:/value-plus-one/1']).to.have.length(1);
+      });
+    });
+
+    describe("with a warmed cache", function () {
+      beforeEach(function () {
+        return this.control.store.set(this.m1.url(), { value: 2 }).then(function () {
+          this.m1Promise = this.m1.fetch();
+          this.m2Promise = this.m2.fetch();
+          return Promise.all([this.m1Promise, this.m2Promise]);
+        }.bind(this));
+      });
+
+      it("populates the models with the response", function () {
+        expect(this.m1.get('value')).to.equal(2);
+        expect(this.m2.get('value')).to.equal(2);
+      });
+
+      it("doesn't call the server", function () {
+        expect(this.requests['GET:/value-plus-one/1']).not.to.exist;
       });
     });
   });
@@ -113,7 +129,7 @@ describe("Fetching", function () {
     });
 
     it("makes multiple calls to the server", function () {
-      expect(this.requests['/value-plus-one/not-a-number']).to.have.length(2);
+      expect(this.requests['GET:/value-plus-one/not-a-number']).to.have.length(2);
     });
   });
 

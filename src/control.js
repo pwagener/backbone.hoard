@@ -11,6 +11,7 @@ var UpdateStrategyClass = require('./update-strategy');
 var PatchStrategyClass = require('./patch-strategy');
 var DeleteStrategyClass = require('./delete-strategy');
 
+// Configuration information to ease the creation of Strategy classes
 var strategies = {
   create: {
     klass: CreateStrategyClass,
@@ -51,6 +52,9 @@ _.each(strategies, function (strategy) {
   strategyClasses[strategy.classProperty] = strategy.klass;
 });
 
+// A Control is the entry point for caching behavior.
+// It serves as a means of grouping the configured Store, Policy, and Strategies,
+// all of which contain the main caching logic
 var Control = function (options) {
   _.extend(this, _.pick(options || {}, mergeOptions));
   var defaultClasses = _.extend({
@@ -59,13 +63,16 @@ var Control = function (options) {
   }, strategyClasses);
   _.defaults(this, defaultClasses);
 
+  // Create and assign a store and policy
   this.store = new this.storeClass(options);
   this.policy = new this.policyClass(options);
+
+  // For each sync method, create and assign a strategy to this Control
+  // Each strategy has access to this Control's store and policy
   var strategyOptions = _.extend({}, options, {
     store: this.store,
     policy: this.policy
   });
-
   _.each(strategies, function (strategy) {
     this[strategy.property] = new this[strategy.classProperty](strategyOptions);
   }, this);
@@ -76,12 +83,15 @@ var Control = function (options) {
 _.extend(Control.prototype, Hoard.Events, {
   initialize: function () {},
 
+  // For the given sync method, execute the matching Strategy
   sync: function (method, model, options) {
     var strategyProperty = strategies[method].property;
     var strategy = this[strategyProperty];
     return strategy.execute(model, options);
   },
 
+  // The main use of Hoard
+  // Return a sync method fully configured for the cache behavior of this Control
   getModelSync: function () {
     return _.bind(this.sync, this);
   }

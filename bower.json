@@ -1,0 +1,13 @@
+{
+  "name": "backbone.hoard",
+  "version": "0.1.1",
+  "description": "Local caching for Backbone",
+  "main": "dist/backbone.hoard.js",
+  "keywords": ["backbone", "cache", "localstorage", "sync"],
+  "author": "Christian Maher",
+  "license": "MIT",
+  "dependencies": {
+    "backbone": "1.0.0 - 1.1.2",
+    "underscore": "1.4.4 - 1.7.0"
+  }
+}

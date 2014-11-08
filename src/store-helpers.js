@@ -2,6 +2,7 @@
 
 var Hoard = require('./backbone.hoard');
 
+// Convenience methods for stores
 module.exports = {
   proxySetItem: function (key, value) {
     try {

@@ -3,60 +3,55 @@
 var _ = require('underscore');
 var Hoard = require('./backbone.hoard');
 
-var getSyncSuccessEvent = function (key) {
-  return 'sync:success:' + key;
-};
-
-var getSyncErrorEvent = function (key) {
-  return 'sync:error:' + key;
+var getStoreActionResponse = function (options) {
+  return function () {
+    if (options.onStoreAction) {
+      options.onStoreAction();
+    }
+  }
 };
 
 var storeResponse = function (context, key, response, options) {
   var meta = context.policy.getMetadata(key, response, options);
-  context.store.set(key, response, meta);
-  context.trigger(getSyncSuccessEvent(key), response);
+  var onStoreComplete = getStoreActionResponse(options);
+  context.store.set(key, response, meta).then(onStoreComplete, onStoreComplete);
 };
 
-var wrapSuccessWithCache = function (context, method, model, options) {
+var invalidateResponse = function (context, key, response, options) {
+  var onStoreComplete = getStoreActionResponse(options);
+  context.store.invalidate(key).then(onStoreComplete, onStoreComplete);
+};
+
+var wrapMethod = function (context, method, model, options) {
   var key = context.policy.getKey(model, method);
-  return _.wrap(options.success, function (onSuccess, response) {
-    if (onSuccess) {
-      onSuccess(response);
+  return _.wrap(options[options.targetMethod], function (targetMethod, response) {
+    if (targetMethod) {
+      targetMethod(response);
     }
-    storeResponse(context, key, response, options);
+    if (options.generateKeyFromResponse) {
+      key = context.policy.getKey(model, method);
+    }
+    if (options.responseHandler) {
+      options.responseHandler(context, key, response, options);
+    }
   });
 };
 
-var wrapErrorWithInvalidate = function (context, method, model, options) {
-  var key = context.policy.getKey(model, method);
-  return _.wrap(options.error, function (onError, response) {
-    if (onError) {
-      onError(response);
-    }
-    context.store.invalidate(key);
-    context.trigger(getSyncErrorEvent(key));
-  });
-};
-
-var cacheSuccess = function (context, method, model, options) {
-  options.success = wrapSuccessWithCache(context, method, model, options);
-  return Hoard.sync(method, model, options);
-};
-
-module.exports = {
-  getSyncSuccessEvent: getSyncSuccessEvent,
-
-  getSyncErrorEvent: getSyncErrorEvent,
-
+// Convenience methods for strategies
+var helpers = {
   proxyWrapSuccessWithCache: function (method, model, options) {
-    return wrapSuccessWithCache(this, method, model, options);
+    return wrapMethod(this, method, model, _.extend({
+      targetMethod: 'success',
+      responseHandler: storeResponse
+    }, options));
   },
 
   proxyWrapErrorWithInvalidate: function (method, model, options) {
-    return wrapErrorWithInvalidate(this, method, model, options);
-  },
-
-  proxyCacheSuccess: function (method, model, options) {
-    return cacheSuccess(this, method, model, options);
+    return wrapMethod(this, method, model, _.extend({
+      targetMethod: 'error',
+      responseHandler: invalidateResponse
+    }, options));
   }
 };
+
+module.exports = helpers;
