@@ -4,7 +4,7 @@ var gulp = require('gulp');
 var webpack = require('gulp-webpack');
 var rename = require('gulp-rename');
 
-gulp.task('dist', [], function () {
+gulp.task('dist', ['bower'], function () {
   return gulp.src('src/build/backbone.hoard.bundle.js')
     .pipe(webpack({
       output: { libraryTarget: 'umd' },
