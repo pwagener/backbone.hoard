@@ -171,11 +171,6 @@ describe("Read Strategy", function () {
         expect(Hoard.sync).to.have.been.calledOnce
           .and.calledWith('read', this.models[0], this.options);
       });
-
-      xit("assigns the proper attributes to the models", function () {
-        expect(this.models[0].toJSON()).to.eql(this.response);
-        expect(this.models[1].toJSON()).to.eql(this.response);
-      });
     });
   });
 });
