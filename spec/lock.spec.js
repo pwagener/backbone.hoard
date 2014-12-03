@@ -49,6 +49,34 @@ describe("Lock", function () {
         }.bind(this));
       });
     });
+
+    describe("within a lock", function () {
+      beforeEach(function () {
+        this.value = 'value';
+
+        this.nestedLock = Lock.withLock('lock', function () {
+          return Lock.withAccess('lock', function () {
+            return this.value;
+          }.bind(this));
+        }.bind(this));
+
+        this.deepLock = Lock.withLock('lock', function () {
+          return Lock.withAccess('lock', function () {
+            return Lock.withAccess('lock', function () {
+              return this.value;
+            }.bind(this));
+          }.bind(this));
+        }.bind(this));
+      });
+
+      it("allows nested access", function () {
+        return expect(this.nestedLock).to.eventually.equal(this.value);
+      });
+
+      it("allows arbitrarily deep access", function () {
+        return expect(this.deepLock).to.eventually.equal(this.value);
+      });
+    });
   });
 
   describe("withLock", function () {
