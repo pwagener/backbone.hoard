@@ -32,10 +32,6 @@ describe("Delete Strategy", function () {
     this.execution = this.strategy.execute(this.model, this.options);
   });
 
-  it("returns the sync deferred", function () {
-    expect(this.execution).to.equal(this.ajaxResponse);
-  });
-
   it("invalidates the cache", function () {
     expect(this.store.invalidate).to.have.been.calledOnce
       .and.calledWith(this.key);

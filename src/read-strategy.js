@@ -65,13 +65,13 @@ var Read = Strategy.extend({
   // Clears it's placeholder access only after storing or invalidating the response
   onCacheMiss: function (key, model, options) {
     var deferred = Hoard.defer();
-    var callback = function (key, promiseHandler, response) {
+    var callback = function (promiseHandler, response) {
       this._decreasePlaceholderAccess(key);
       promiseHandler(response);
     };
     var cacheOptions = _.extend({
-      onStoreSuccess: _.bind(callback, this, key, deferred.resolve),
-      onStoreError: _.bind(callback, this, key, deferred.reject)
+      onStoreSuccess: _.bind(callback, this, deferred.resolve),
+      onStoreError: _.bind(callback, this, deferred.reject)
     }, options);
     options.success = this._wrapSuccessWithCache('read', model, cacheOptions);
     options.error = this._wrapErrorWithInvalidate('read', model, cacheOptions);
@@ -84,13 +84,13 @@ var Read = Strategy.extend({
   // then resolve or reject with the response from the live request
   _onPlaceholderHit: function (key, options) {
     var deferred = Hoard.defer();
-    var callback = function (promiseHandler, originalHandler, key, response) {
+    var callback = function (promiseHandler, originalHandler, response) {
       if (originalHandler) { originalHandler(response); }
       this._decreasePlaceholderAccess(key);
       promiseHandler(response);
     };
-    var onSuccess = _.bind(callback, this, deferred.resolve, options.success, key);
-    var onError = _.bind(callback, this, deferred.reject, options.error, key);
+    var onSuccess = _.bind(callback, this, deferred.resolve, options.success);
+    var onError = _.bind(callback, this, deferred.reject, options.error);
 
     this.placeholders[key].accesses += 1;
     this.placeholders[key].promise.then(onSuccess, onError);

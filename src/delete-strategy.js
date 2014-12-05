@@ -7,8 +7,10 @@ var Strategy = require('./strategy');
 var Delete = Strategy.extend({
   execute: function (model, options) {
     var key = this.policy.getKey(model, 'delete');
-    this.store.invalidate(key);
-    return Hoard.sync('delete', model, options);
+    var invalidatePromise = this.store.invalidate(key);
+    var syncPromise = Hoard.sync('delete', model, options);
+    var returnSync = function () { return syncPromise; };
+    return invalidatePromise.then(returnSync, returnSync);
   }
 });
 
