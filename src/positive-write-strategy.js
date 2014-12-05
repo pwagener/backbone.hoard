@@ -11,9 +11,14 @@ module.exports = Strategy.extend({
   // If cacheOptions.generateKeyFromResponse is true,
   // cache using the key from the response, rather than the request
   execute: function (model, options) {
-    var cacheOptions = _.extend({}, options, _.result(this, 'cacheOptions'));
+    var deferred = Hoard.defer();
+    var cacheOptions = _.extend({
+      onStoreSuccess: deferred.resolve,
+      onStoreError: deferred.reject
+    }, options, _.result(this, 'cacheOptions'));
     options.success = this._wrapSuccessWithCache(this._method, model, cacheOptions);
-    return Hoard.sync(this._method, model, options);
+    Hoard.sync(this._method, model, options, deferred);
+    return deferred.promise;
   },
 
   cacheOptions: {},

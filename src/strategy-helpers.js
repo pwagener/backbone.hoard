@@ -3,23 +3,22 @@
 var _ = require('underscore');
 var Hoard = require('./backbone.hoard');
 
-var getStoreActionResponse = function (options) {
+var storeAction = function (method, options, response) {
+  var callback = options[method] || function () { return response };
   return function () {
-    if (options.onStoreAction) {
-      options.onStoreAction();
-    }
+    return callback(response);
   }
 };
 
 var storeResponse = function (context, key, response, options) {
   var meta = context.policy.getMetadata(key, response, options);
-  var onStoreComplete = getStoreActionResponse(options);
-  context.store.set(key, response, meta).then(onStoreComplete, onStoreComplete);
+  context.store.set(key, response, meta).then(storeAction('onStoreSuccess', options, response),
+    storeAction('onStoreError', options, response));
 };
 
 var invalidateResponse = function (context, key, response, options) {
-  var onStoreComplete = getStoreActionResponse(options);
-  context.store.invalidate(key).then(onStoreComplete, onStoreComplete);
+  context.store.invalidate(key).then(storeAction('onStoreSuccess', options, response),
+    storeAction('onStoreError', options, response));
 };
 
 var wrapMethod = function (context, method, model, options) {

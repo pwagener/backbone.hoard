@@ -41,10 +41,6 @@ describe("Positive write strategies", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("returns the sync deferred", function () {
-      expect(this.execution).to.equal(this.ajaxResponse);
-    });
-
     it("always calls the underlying model's sync with the same arguments", function () {
       expect(Hoard.sync).to.have.been.calledOnce
         .and.calledWith('create', this.model, this.options);
@@ -68,10 +64,6 @@ describe("Positive write strategies", function () {
       this.execution = this.strategy.execute(this.model, this.options);
     });
 
-    it("returns the sync deferred", function () {
-      expect(this.execution).to.equal(this.ajaxResponse);
-    });
-
     it("always calls the underlying model's sync with the same arguments", function () {
       expect(Hoard.sync).to.have.been.calledOnce
         .and.calledWith('update', this.model, this.options);
@@ -93,10 +85,6 @@ describe("Positive write strategies", function () {
         policy: this.policy
       });
       this.execution = this.strategy.execute(this.model, this.options);
-    });
-
-    it("returns the sync deferred", function () {
-      expect(this.execution).to.equal(this.ajaxResponse);
     });
 
     it("always calls the underlying model's sync with the same arguments", function () {
