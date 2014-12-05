@@ -2,4 +2,4 @@
 
 var gulp = require('gulp');
 
-gulp.task('test', ['test:integration']);
+gulp.task('test', ['test:unit', 'test:integration']);
