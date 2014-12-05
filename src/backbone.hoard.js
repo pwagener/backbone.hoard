@@ -20,5 +20,14 @@ module.exports = {
       deferred.reject = reject;
     });
     return deferred;
+  },
+
+  // A utility method to execute a callback
+  // And pass through the failure
+  rejectCallback: function (callback) {
+    return function (failure) {
+      var value = callback(failure);
+      return Hoard.Promise.reject(value);
+    }
   }
 };

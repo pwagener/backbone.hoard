@@ -57,16 +57,17 @@ var Lock = {
     var lockLater = _.bind(this.withLock, this, lockName, callback);
 
     if (lock.locked) {
-      return lock.locked.then(lockLater);
+      return lock.locked.then(lockLater, Hoard.rejectCallback(lockLater));
     } else if (!_.isEmpty(lock.accesses)) {
-      return allPromisesComplete(lock.accesses).then(lockLater);
+      return allPromisesComplete(lock.accesses).then(lockLater, Hoard.rejectCallback(lockLater));
     } else {
+      var cleanLock = function (value) {
+        delete lock.locked;
+        return value;
+      };
       var acquiredLock = Hoard.Promise.resolve()
         .then(callWithLockContext(lock, true, callback))
-        .then(function (value) {
-          delete lock.locked;
-          return value;
-        });
+        .then(cleanLock, Hoard.rejectCallback(cleanLock));
       lock.locked = acquiredLock;
       return acquiredLock;
     }
@@ -78,15 +79,16 @@ var Lock = {
     var lock = getLock(lockName);
     if (lock.locked && !lock.isInsideLock) {
       var accessLater = _.bind(this.withAccess, this, lockName, callback);
-      return lock.locked.then(accessLater);
+      return lock.locked.then(accessLater, Hoard.rejectCallback(accessLater));
     } else {
       var accessId = _.uniqueId('backbone.hoard.lock.access_');
+      var cleanLock = function (value) {
+        delete lock.accesses[accessId];
+        return value;
+      };
       var access = Hoard.Promise.resolve()
         .then(callWithLockContext(lock, lock.isInsideLock, callback))
-        .then(function (value) {
-          delete lock.accesses[accessId];
-          return value;
-        });
+        .then(cleanLock, Hoard.rejectCallback(cleanLock));
       lock.accesses[accessId] = access;
       return access;
     }

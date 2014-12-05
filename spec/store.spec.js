@@ -36,7 +36,7 @@ describe("Store", function () {
       beforeEach(function () {
         this.store.metaStore.set.withArgs(this.key, this.meta, this.options)
           .returns(Hoard.Promise.resolve());
-        this.result = this.store.set(this.key, this.value, this.meta, this.options);
+        return this.store.set(this.key, this.value, this.meta, this.options);
       });
 
       it("stores the provided value in JSON form", function () {
@@ -48,10 +48,6 @@ describe("Store", function () {
         var expectedMeta = _.extend({ size: this.stringValue.length }, this.meta);
         expect(this.store.metaStore.set).to.have.been.calledOnce
           .and.calledWith(this.key, expectedMeta, this.options);
-      });
-
-      it("returns a resovled promise", function () {
-        return expect(this.result).to.have.been.fulfilled;
       });
     });
 
@@ -68,12 +64,6 @@ describe("Store", function () {
           this.result = this.store.set(this.key, this.value, this.meta, this.options);
         });
 
-        it("[SUBJECT TO CHANGE] clears the cache", function () {
-          return this.result.catch(function () {
-            expect(this.store.invalidateAll).to.have.been.calledOnce;
-          }.bind(this));
-        });
-
         it("returns a rejected promise", function () {
           return expect(this.result).to.have.been.rejected;
         });
@@ -83,12 +73,6 @@ describe("Store", function () {
         beforeEach(function () {
           this.store.metaStore.set.returns(Hoard.Promise.reject());
           this.result = this.store.set(this.key, this.value, this.meta, this.options);
-        });
-
-        it("[SUBJECT TO CHANGE] clears the cache", function () {
-          return this.result.catch(function () {
-            expect(this.store.invalidateAll).to.have.been.calledOnce;
-          }.bind(this));
         });
 
         it("returns a rejected promise", function () {
@@ -125,7 +109,7 @@ describe("Store", function () {
 
   describe("invalidate", function () {
     beforeEach(function () {
-      this.result = this.store.invalidate(this.key, this.options);
+      return this.store.invalidate(this.key, this.options);
     });
 
     it("removes the item from the cache", function () {
@@ -137,10 +121,6 @@ describe("Store", function () {
       expect(this.store.metaStore.invalidate).to.have.been.calledOnce
         .and.calledWith(this.key, this.options);
     });
-
-    it("returns a resolved promise", function () {
-      return expect(this.result).to.have.been.fulfilled;
-    });
   });
 
   describe("invalidateAll", function () {
@@ -148,14 +128,12 @@ describe("Store", function () {
       var metaDataPromise = Hoard.Promise.resolve({ key1: 'true', key2: 'true' });
       this.sinon.stub(this.store.metaStore, 'getAll').returns(metaDataPromise);
       this.sinon.stub(this.store.metaStore, 'invalidateAll').returns(Hoard.Promise.resolve());
-      this.result = this.store.invalidateAll();
+      return this.store.invalidateAll();
     });
 
     it("removes each item present in the metadata", function () {
-      return this.result.then(function () {
-        expect(this.store.backend.removeItem).to.have.been.calledWith('key1')
-          .and.calledWith('key2');
-      }.bind(this));
+      expect(this.store.backend.removeItem).to.have.been.calledWith('key1')
+        .and.calledWith('key2');
     });
 
     it("invalidates all metadata", function () {
