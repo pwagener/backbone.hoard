@@ -1,3 +1,3 @@
 'use strict';
 var gulp = require('gulp');
-gulp.task('default', ['run']);
+gulp.task('default', ['test']);
